@@ -1,13 +1,19 @@
 'use client';
 
 import { EditingForm, type EditingFormData } from '@/components/editing-form';
-import { GenerationForm, type GenerationFormData } from '@/components/generation-form';
+// import { GenerationForm, type GenerationFormData } from '@/components/generation-form'; // Commented out - generation disabled
+import type { GenerationFormData } from '@/components/generation-form'; // Import type only for compatibility
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
+// import { MoodboardCenter, type GeneratedImage } from '@/components/moodboard-center'; // Commented out - moodboard disabled
+// import { MoodboardPresets } from '@/components/moodboard-presets'; // Commented out - moodboard disabled
 import { PasswordDialog } from '@/components/password-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { calculateApiCost, type CostDetails } from '@/lib/cost-utils';
 import { db, type ImageRecord } from '@/lib/db';
+// import { downloadImages, type DownloadableImage } from '@/lib/download-manager'; // Commented out - moodboard disabled
+// import { MOODBOARD_PRESETS } from '@/lib/prompt-templates'; // Commented out - moodboard disabled
+// import type { MoodboardPreset } from '@/types/templates'; // Commented out - moodboard disabled
 import { useLiveQuery } from 'dexie-react-hooks';
 import * as React from 'react';
 
@@ -20,20 +26,20 @@ export type HistoryMetadata = {
     images: HistoryImage[];
     storageModeUsed?: 'fs' | 'indexeddb';
     durationMs: number;
-    quality: GenerationFormData['quality'];
-    background: GenerationFormData['background'];
-    moderation: GenerationFormData['moderation'];
+    quality: 'low' | 'medium' | 'high' | 'auto';
+    background: 'transparent' | 'opaque' | 'auto';
+    moderation: 'low' | 'auto';
     prompt: string;
     mode: 'generate' | 'edit';
     costDetails: CostDetails | null;
-    output_format?: GenerationFormData['output_format'];
+    output_format?: 'png' | 'jpeg' | 'webp';
 };
 
-type DrawnPoint = {
-    x: number;
-    y: number;
-    size: number;
-};
+// type DrawnPoint = { // Commented out - mask functionality removed
+//     x: number;
+//     y: number;
+//     size: number;
+// };
 
 const MAX_EDIT_IMAGES = 10;
 
@@ -65,7 +71,7 @@ type ApiImageResponseItem = {
 };
 
 export default function HomePage() {
-    const [mode, setMode] = React.useState<'generate' | 'edit'>('generate');
+    const [mode, setMode] = React.useState<'generate' | 'edit'>('edit');
     const [isPasswordRequiredByBackend, setIsPasswordRequiredByBackend] = React.useState<boolean | null>(null);
     const [clientPasswordHash, setClientPasswordHash] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
@@ -89,26 +95,31 @@ export default function HomePage() {
     const [editSourceImagePreviewUrls, setEditSourceImagePreviewUrls] = React.useState<string[]>([]);
     const [editPrompt, setEditPrompt] = React.useState('');
     const [editN, setEditN] = React.useState([1]);
-    const [editSize, setEditSize] = React.useState<EditingFormData['size']>('auto');
-    const [editQuality, setEditQuality] = React.useState<EditingFormData['quality']>('auto');
-    const [editBrushSize, setEditBrushSize] = React.useState([20]);
-    const [editShowMaskEditor, setEditShowMaskEditor] = React.useState(false);
-    const [editGeneratedMaskFile, setEditGeneratedMaskFile] = React.useState<File | null>(null);
-    const [editIsMaskSaved, setEditIsMaskSaved] = React.useState(false);
-    const [editOriginalImageSize, setEditOriginalImageSize] = React.useState<{ width: number; height: number } | null>(
-        null
-    );
-    const [editDrawnPoints, setEditDrawnPoints] = React.useState<DrawnPoint[]>([]);
-    const [editMaskPreviewUrl, setEditMaskPreviewUrl] = React.useState<string | null>(null);
+    // const [editSize, setEditSize] = React.useState<EditingFormData['size']>('auto'); // Commented out - size fixed to square
+    // const [editQuality, setEditQuality] = React.useState<EditingFormData['quality']>('auto'); // Commented out - quality fixed to high
+    // const [editBrushSize, setEditBrushSize] = React.useState([20]); // Commented out - mask functionality removed
+    // const [editShowMaskEditor, setEditShowMaskEditor] = React.useState(false); // Commented out - mask functionality removed
+    // const [editGeneratedMaskFile, setEditGeneratedMaskFile] = React.useState<File | null>(null); // Commented out - mask functionality removed
+    // const [editIsMaskSaved, setEditIsMaskSaved] = React.useState(false); // Commented out - mask functionality removed
+    // const [editOriginalImageSize, setEditOriginalImageSize] = React.useState<{ width: number; height: number } | null>(
+    //     null
+    // ); // Commented out - mask functionality removed
+    // const [editDrawnPoints, setEditDrawnPoints] = React.useState<DrawnPoint[]>([]); // Commented out - mask functionality removed
+    // const [editMaskPreviewUrl, setEditMaskPreviewUrl] = React.useState<string | null>(null); // Commented out - mask functionality removed
 
-    const [genPrompt, setGenPrompt] = React.useState('');
-    const [genN, setGenN] = React.useState([1]);
-    const [genSize, setGenSize] = React.useState<GenerationFormData['size']>('auto');
-    const [genQuality, setGenQuality] = React.useState<GenerationFormData['quality']>('auto');
-    const [genOutputFormat, setGenOutputFormat] = React.useState<GenerationFormData['output_format']>('png');
-    const [genCompression, setGenCompression] = React.useState([100]);
-    const [genBackground, setGenBackground] = React.useState<GenerationFormData['background']>('auto');
-    const [genModeration, setGenModeration] = React.useState<GenerationFormData['moderation']>('auto');
+    // Generation state variables commented out - generation disabled
+    // const [genPrompt, setGenPrompt] = React.useState('');
+    // const [genN, setGenN] = React.useState([1]);
+    // const [genSize, setGenSize] = React.useState<GenerationFormData['size']>('auto');
+    // const [genQuality, setGenQuality] = React.useState<GenerationFormData['quality']>('auto');
+    // const [genOutputFormat, setGenOutputFormat] = React.useState<GenerationFormData['output_format']>('png');
+    // const [genCompression, setGenCompression] = React.useState([100]);
+    // const [genBackground, setGenBackground] = React.useState<GenerationFormData['background']>('auto');
+    // const [genModeration, setGenModeration] = React.useState<GenerationFormData['moderation']>('auto');
+
+    // Moodboard state
+    // const [selectedPresets, setSelectedPresets] = React.useState<string[]>([]); // Commented out - moodboard disabled
+    // const [showMoodboard, setShowMoodboard] = React.useState(false); // Commented out - moodboard disabled
 
     const getImageSrc = React.useCallback(
         (filename: string): string | undefined => {
@@ -300,7 +311,7 @@ export default function HomePage() {
         return 'image/png';
     };
 
-    const handleApiCall = async (formData: GenerationFormData | EditingFormData) => {
+    const handleApiCall = React.useCallback(async (formData: GenerationFormData | EditingFormData) => {
         const startTime = Date.now();
         let durationMs = 0;
 
@@ -321,42 +332,38 @@ export default function HomePage() {
         }
         apiFormData.append('mode', mode);
 
-        if (mode === 'generate') {
-            const genData = formData as GenerationFormData;
-            apiFormData.append('prompt', genPrompt);
-            apiFormData.append('n', genN[0].toString());
-            apiFormData.append('size', genSize);
-            apiFormData.append('quality', genQuality);
-            apiFormData.append('output_format', genOutputFormat);
-            if (
-                (genOutputFormat === 'jpeg' || genOutputFormat === 'webp') &&
-                genData.output_compression !== undefined
-            ) {
-                apiFormData.append('output_compression', genData.output_compression.toString());
-            }
-            apiFormData.append('background', genBackground);
-            apiFormData.append('moderation', genModeration);
-        } else {
-            apiFormData.append('prompt', editPrompt);
-            apiFormData.append('n', editN[0].toString());
-            apiFormData.append('size', editSize);
-            apiFormData.append('quality', editQuality);
+        // Only edit mode is supported
+        apiFormData.append('prompt', editPrompt);
+        apiFormData.append('n', editN[0].toString());
+        apiFormData.append('size', '1024x1024'); // Always use square format
+        apiFormData.append('quality', 'high'); // Always use high quality
 
-            editImageFiles.forEach((file, index) => {
-                apiFormData.append(`image_${index}`, file, file.name);
-            });
-            if (editGeneratedMaskFile) {
-                apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
-            }
-        }
+        editImageFiles.forEach((file, index) => {
+            apiFormData.append(`image_${index}`, file, file.name);
+        });
+        // if (editGeneratedMaskFile) { // Commented out - mask functionality removed
+        //     apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
+        // }
 
         console.log('Sending request to /api/images with mode:', mode);
 
         try {
+            console.log('Starting fetch request...');
+            
+            // Create manual abort controller with longer timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+            }, 300000); // 5 minutes
+            
             const response = await fetch('/api/images', {
                 method: 'POST',
-                body: apiFormData
+                body: apiFormData,
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
+            console.log('Fetch completed with status:', response.status);
 
             const result = await response.json();
 
@@ -378,25 +385,18 @@ export default function HomePage() {
                 durationMs = Date.now() - startTime;
                 console.log(`API call successful. Duration: ${durationMs}ms`);
 
-                let historyQuality: GenerationFormData['quality'] = 'auto';
-                let historyBackground: GenerationFormData['background'] = 'auto';
-                let historyModeration: GenerationFormData['moderation'] = 'auto';
-                let historyOutputFormat: GenerationFormData['output_format'] = 'png';
+                let historyQuality: 'low' | 'medium' | 'high' | 'auto' = 'auto';
+                let historyBackground: 'transparent' | 'opaque' | 'auto' = 'auto';
+                let historyModeration: 'low' | 'auto' = 'auto';
+                let historyOutputFormat: 'png' | 'jpeg' | 'webp' = 'png';
                 let historyPrompt: string = '';
 
-                if (mode === 'generate') {
-                    historyQuality = genQuality;
-                    historyBackground = genBackground;
-                    historyModeration = genModeration;
-                    historyOutputFormat = genOutputFormat;
-                    historyPrompt = genPrompt;
-                } else {
-                    historyQuality = editQuality;
-                    historyBackground = 'auto';
-                    historyModeration = 'auto';
-                    historyOutputFormat = 'png';
-                    historyPrompt = editPrompt;
-                }
+                // Only edit mode is supported
+                historyQuality = 'high'; // Always use high quality
+                historyBackground = 'auto';
+                historyModeration = 'auto';
+                historyOutputFormat = 'png';
+                historyPrompt = editPrompt;
 
                 const costDetails = calculateApiCost(result.usage);
 
@@ -475,14 +475,36 @@ export default function HomePage() {
         } catch (err: unknown) {
             durationMs = Date.now() - startTime;
             console.error(`API Call Error after ${durationMs}ms:`, err);
-            const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
+            
+            let errorMessage = 'An unexpected error occurred.';
+            if (err instanceof Error) {
+                if (err.name === 'AbortError') {
+                    errorMessage = 'Request timed out. Image generation can take up to 2 minutes.';
+                } else if (err.message === 'Failed to fetch') {
+                    errorMessage = 'Network error. Please check your connection and try again.';
+                } else {
+                    errorMessage = err.message;
+                }
+            }
+            
             setError(errorMessage);
             setLatestImageBatch(null);
         } finally {
             if (durationMs === 0) durationMs = Date.now() - startTime;
             setIsLoading(false);
         }
-    };
+    }, [
+        isPasswordRequiredByBackend,
+        clientPasswordHash,
+        mode,
+        editPrompt,
+        editN,
+        // editSize, // Commented out - size fixed to square
+        // editQuality, // Commented out - quality fixed to high
+        editImageFiles,
+        // editGeneratedMaskFile, // Commented out - mask functionality removed
+        setBlobUrlCache
+    ]);
 
     const handleHistorySelect = (item: HistoryMetadata) => {
         console.log(
@@ -697,6 +719,8 @@ export default function HomePage() {
         setItemToDeleteConfirm(null);
     };
 
+    // Moodboard handlers commented out
+
     return (
         <main className='flex min-h-screen flex-col items-center bg-black p-4 text-white md:p-8 lg:p-12'>
             <PasswordDialog
@@ -713,7 +737,8 @@ export default function HomePage() {
             <div className='w-full max-w-7xl space-y-6'>
                 <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
                     <div className='relative flex h-[70vh] min-h-[600px] flex-col lg:col-span-1'>
-                        <div className={mode === 'generate' ? 'block h-full w-full' : 'hidden'}>
+                        {/* GenerationForm commented out for future reactivation */}
+                        {/* <div className={mode === 'generate' ? 'block h-full w-full' : 'hidden'}>
                             <GenerationForm
                                 onSubmit={handleApiCall}
                                 isLoading={isLoading}
@@ -739,7 +764,7 @@ export default function HomePage() {
                                 moderation={genModeration}
                                 setModeration={setGenModeration}
                             />
-                        </div>
+                        </div> */}
                         <div className={mode === 'edit' ? 'block h-full w-full' : 'hidden'}>
                             <EditingForm
                                 onSubmit={handleApiCall}
@@ -758,24 +783,6 @@ export default function HomePage() {
                                 setEditPrompt={setEditPrompt}
                                 editN={editN}
                                 setEditN={setEditN}
-                                editSize={editSize}
-                                setEditSize={setEditSize}
-                                editQuality={editQuality}
-                                setEditQuality={setEditQuality}
-                                editBrushSize={editBrushSize}
-                                setEditBrushSize={setEditBrushSize}
-                                editShowMaskEditor={editShowMaskEditor}
-                                setEditShowMaskEditor={setEditShowMaskEditor}
-                                editGeneratedMaskFile={editGeneratedMaskFile}
-                                setEditGeneratedMaskFile={setEditGeneratedMaskFile}
-                                editIsMaskSaved={editIsMaskSaved}
-                                setEditIsMaskSaved={setEditIsMaskSaved}
-                                editOriginalImageSize={editOriginalImageSize}
-                                setEditOriginalImageSize={setEditOriginalImageSize}
-                                editDrawnPoints={editDrawnPoints}
-                                setEditDrawnPoints={setEditDrawnPoints}
-                                editMaskPreviewUrl={editMaskPreviewUrl}
-                                setEditMaskPreviewUrl={setEditMaskPreviewUrl}
                             />
                         </div>
                     </div>
@@ -798,6 +805,33 @@ export default function HomePage() {
                         />
                     </div>
                 </div>
+
+                {/* Moodboard Presets Section - Temporarily disabled 
+                {mode === 'edit' && (
+                    <div className='space-y-6'>
+                        <div className='border-t border-white/10 pt-6'>
+                            <h2 className='text-xl font-semibold text-white mb-4'>Moodboard Presets</h2>
+                            <MoodboardPresets
+                                selectedPresets={selectedPresets}
+                                onPresetsChange={setSelectedPresets}
+                                onApplyPresets={handleApplyPresets}
+                            />
+                        </div>
+
+                        Moodboard Center - Show when we have moodboard images
+                        {showMoodboard && (
+                            <div className='border-t border-white/10 pt-6'>
+                                <h2 className='text-xl font-semibold text-white mb-4'>Generated Variations</h2>
+                                <MoodboardCenter
+                                    images={[]}
+                                    onBatchDownload={handleMoodboardDownload}
+                                    onRegenerateWithPreset={handleRegenerateWithPreset}
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+                */}
 
                 <div className='min-h-[450px]'>
                     <HistoryPanel

@@ -1,0 +1,1086 @@
+import { PromptTemplate, TemplateCategory, MoodboardPreset } from '@/types/templates';
+
+export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
+    {
+        id: 'product',
+        name: 'Product Photography',
+        description: 'Professional product shots and commercial photography',
+        icon: 'Package'
+    },
+    {
+        id: 'lifestyle',
+        name: 'Lifestyle & Scenes',
+        description: 'Products in real-world contexts and environments',
+        icon: 'Home'
+    },
+    {
+        id: 'artistic',
+        name: 'Artistic & Creative',
+        description: 'Creative compositions and artistic interpretations',
+        icon: 'Palette'
+    },
+    {
+        id: 'studio',
+        name: 'Studio & Minimal',
+        description: 'Clean, minimal studio setups',
+        icon: 'Camera'
+    },
+    {
+        id: 'mood',
+        name: 'Mood & Atmosphere',
+        description: 'Professional mood images for product photography with uploaded images',
+        icon: 'Sparkles'
+    }
+];
+
+export const PROMPT_TEMPLATES: PromptTemplate[] = [
+    // Product Photography Templates
+    {
+        id: 'product-hero',
+        name: 'Product Hero Shot',
+        description: 'Clean, professional product photography for e-commerce',
+        category: 'product',
+        template: 'Professional product photography of {product} on a {surface}, {lighting} lighting, {angle} angle, commercial photography style, high resolution, clean background',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product',
+                placeholder: 'wireless headphones',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                placeholder: 'white marble surface',
+                type: 'select',
+                options: [
+                    'white marble surface',
+                    'dark wooden table',
+                    'glass surface',
+                    'concrete surface',
+                    'fabric background',
+                    'reflective surface'
+                ],
+                defaultValue: 'white marble surface'
+            },
+            {
+                name: 'lighting',
+                label: 'Lighting Style',
+                placeholder: 'soft natural',
+                type: 'select',
+                options: [
+                    'soft natural',
+                    'dramatic directional',
+                    'bright studio',
+                    'moody ambient',
+                    'golden hour',
+                    'rim lighting'
+                ],
+                defaultValue: 'soft natural'
+            },
+            {
+                name: 'angle',
+                label: 'Camera Angle',
+                placeholder: 'three-quarter',
+                type: 'select',
+                options: [
+                    'straight-on',
+                    'three-quarter',
+                    'overhead',
+                    'low angle',
+                    'profile',
+                    'detail macro'
+                ],
+                defaultValue: 'three-quarter'
+            }
+        ],
+        tags: ['product', 'commercial', 'clean', 'professional']
+    },
+    {
+        id: 'product-lifestyle',
+        name: 'Lifestyle Context',
+        description: 'Product shown in a real-world setting',
+        category: 'lifestyle',
+        template: '{product} in a {setting} environment, {mood} atmosphere, {style} aesthetic, natural placement, lifestyle photography',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product',
+                placeholder: 'coffee mug',
+                type: 'text'
+            },
+            {
+                name: 'setting',
+                label: 'Setting',
+                placeholder: 'cozy kitchen',
+                type: 'select',
+                options: [
+                    'cozy kitchen',
+                    'modern office',
+                    'outdoor patio',
+                    'bedroom nightstand',
+                    'bathroom counter',
+                    'living room',
+                    'cafe table',
+                    'workshop bench'
+                ],
+                defaultValue: 'cozy kitchen'
+            },
+            {
+                name: 'mood',
+                label: 'Mood',
+                placeholder: 'warm and inviting',
+                type: 'select',
+                options: [
+                    'warm and inviting',
+                    'bright and energetic',
+                    'calm and serene',
+                    'luxurious and elegant',
+                    'rustic and natural',
+                    'modern and sleek'
+                ],
+                defaultValue: 'warm and inviting'
+            },
+            {
+                name: 'style',
+                label: 'Style',
+                placeholder: 'Scandinavian',
+                type: 'select',
+                options: [
+                    'Scandinavian',
+                    'industrial',
+                    'bohemian',
+                    'minimalist',
+                    'farmhouse',
+                    'contemporary'
+                ],
+                defaultValue: 'Scandinavian'
+            }
+        ],
+        tags: ['lifestyle', 'contextual', 'natural', 'environment']
+    },
+    {
+        id: 'studio-minimal',
+        name: 'Minimal Studio',
+        description: 'Clean, minimal studio photography',
+        category: 'studio',
+        template: 'Minimal studio photography of {product}, {background} background, {shadows} shadows, clean composition, negative space, professional lighting',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product',
+                placeholder: 'smartphone',
+                type: 'text'
+            },
+            {
+                name: 'background',
+                label: 'Background',
+                placeholder: 'pure white',
+                type: 'select',
+                options: [
+                    'pure white',
+                    'soft gradient',
+                    'textured paper',
+                    'colored backdrop',
+                    'transparent',
+                    'geometric shapes'
+                ],
+                defaultValue: 'pure white'
+            },
+            {
+                name: 'shadows',
+                label: 'Shadow Style',
+                placeholder: 'soft drop',
+                type: 'select',
+                options: [
+                    'soft drop',
+                    'no shadows',
+                    'dramatic hard',
+                    'contact shadows only',
+                    'reflected light'
+                ],
+                defaultValue: 'soft drop'
+            }
+        ],
+        tags: ['minimal', 'studio', 'clean', 'professional']
+    },
+    {
+        id: 'artistic-creative',
+        name: 'Creative Composition',
+        description: 'Artistic and creative product interpretations',
+        category: 'artistic',
+        template: 'Creative artistic composition featuring {product}, {composition} composition, {color_scheme} color palette, {texture} textures, {mood} mood, artistic photography',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product',
+                placeholder: 'perfume bottle',
+                type: 'text'
+            },
+            {
+                name: 'composition',
+                label: 'Composition Style',
+                placeholder: 'asymmetrical',
+                type: 'select',
+                options: [
+                    'asymmetrical',
+                    'centered',
+                    'rule of thirds',
+                    'diagonal',
+                    'layered depth',
+                    'abstract arrangement'
+                ],
+                defaultValue: 'asymmetrical'
+            },
+            {
+                name: 'color_scheme',
+                label: 'Color Scheme',
+                placeholder: 'monochromatic',
+                type: 'select',
+                options: [
+                    'monochromatic',
+                    'complementary',
+                    'analogous',
+                    'vibrant contrast',
+                    'muted earth tones',
+                    'pastel harmony'
+                ],
+                defaultValue: 'monochromatic'
+            },
+            {
+                name: 'texture',
+                label: 'Texture Elements',
+                placeholder: 'smooth and rough',
+                type: 'select',
+                options: [
+                    'smooth and rough',
+                    'organic materials',
+                    'metallic surfaces',
+                    'fabric textures',
+                    'natural elements',
+                    'geometric patterns'
+                ],
+                defaultValue: 'smooth and rough'
+            },
+            {
+                name: 'mood',
+                label: 'Artistic Mood',
+                placeholder: 'mysterious',
+                type: 'select',
+                options: [
+                    'mysterious',
+                    'ethereal',
+                    'bold and confident',
+                    'dreamy',
+                    'sophisticated',
+                    'playful'
+                ],
+                defaultValue: 'mysterious'
+            }
+        ],
+        tags: ['artistic', 'creative', 'composition', 'mood']
+    },
+    {
+        id: 'seasonal-context',
+        name: 'Seasonal Context',
+        description: 'Product photography with seasonal themes',
+        category: 'lifestyle',
+        template: '{product} in a {season} setting, {seasonal_elements} elements, {lighting} lighting, seasonal lifestyle photography, {color_mood} color mood',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product',
+                placeholder: 'candle',
+                type: 'text'
+            },
+            {
+                name: 'season',
+                label: 'Season',
+                placeholder: 'autumn',
+                type: 'select',
+                options: [
+                    'spring',
+                    'summer',
+                    'autumn',
+                    'winter',
+                    'holiday',
+                    'back-to-school'
+                ],
+                defaultValue: 'autumn'
+            },
+            {
+                name: 'seasonal_elements',
+                label: 'Seasonal Elements',
+                placeholder: 'fallen leaves and pumpkins',
+                type: 'select',
+                options: [
+                    'fallen leaves and pumpkins',
+                    'fresh flowers and greenery',
+                    'beach elements and sunshine',
+                    'snow and pine branches',
+                    'holiday decorations',
+                    'school supplies'
+                ],
+                defaultValue: 'fallen leaves and pumpkins'
+            },
+            {
+                name: 'lighting',
+                label: 'Seasonal Lighting',
+                placeholder: 'warm golden hour',
+                type: 'select',
+                options: [
+                    'warm golden hour',
+                    'bright summer sun',
+                    'soft spring light',
+                    'cozy indoor glow',
+                    'festive warm lighting',
+                    'cool winter light'
+                ],
+                defaultValue: 'warm golden hour'
+            },
+            {
+                name: 'color_mood',
+                label: 'Color Mood',
+                placeholder: 'warm oranges and browns',
+                type: 'select',
+                options: [
+                    'warm oranges and browns',
+                    'fresh greens and whites',
+                    'bright blues and yellows',
+                    'cool blues and whites',
+                    'festive reds and golds',
+                    'neutral back-to-school tones'
+                ],
+                defaultValue: 'warm oranges and browns'
+            }
+        ],
+        tags: ['seasonal', 'lifestyle', 'contextual', 'themed']
+    },
+
+    // Mood & Atmosphere Templates
+    {
+        id: 'mood-hygge-table',
+        name: 'Rustic & Warm "Hygge" Table',
+        description: 'Perfect for Christmas, autumn, or cozy dinner settings',
+        category: 'mood',
+        template: 'A mood image featuring {product} placed on a {surface}. The scene is styled for a cozy "hygge" dinner with {styling_elements}. The lighting is {lighting_style}, creating {shadow_type}. Photographed with a {camera_setup}, {depth_of_field} with a beautifully blurred background. {technical_specs}, {color_mood} tones, cinematic feel.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Table Surface',
+                placeholder: 'dark, rustic oak dining table',
+                type: 'select',
+                options: ['dark, rustic oak dining table', 'weathered wood table', 'vintage farm table'],
+                defaultValue: 'dark, rustic oak dining table'
+            },
+            {
+                name: 'styling_elements',
+                label: 'Styling Elements',
+                type: 'select',
+                placeholder: 'Choose styling elements',
+                options: [
+                    'soft linen napkins in a muted green, scattered walnuts, and dried hydrangeas',
+                    'rough linen cloth, pinecones, and candles',
+                    'vintage plates, autumn leaves, and ceramic bowls'
+                ],
+                defaultValue: 'soft linen napkins in a muted green, scattered walnuts, and dried hydrangeas'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['warm and atmospheric, coming from the side like soft candlelight', 'golden hour light streaming through windows', 'cozy fireplace glow'],
+                defaultValue: 'warm and atmospheric, coming from the side like soft candlelight'
+            },
+            {
+                name: 'shadow_type',
+                label: 'Shadow Type',
+                type: 'select',
+                placeholder: 'Choose shadow type',
+                options: ['long, gentle shadows', 'soft, diffused shadows', 'dramatic directional shadows'],
+                defaultValue: 'long, gentle shadows'
+            },
+            {
+                name: 'camera_setup',
+                label: 'Camera Setup',
+                type: 'select',
+                placeholder: 'Select camera setup',
+                options: ['Hasselblad medium format camera, 80mm lens', 'Canon 5D Mark IV, 50mm f/1.4 lens', 'Phase One camera system'],
+                defaultValue: 'Hasselblad medium format camera, 80mm lens'
+            },
+            {
+                name: 'depth_of_field',
+                label: 'Depth of Field',
+                type: 'select',
+                placeholder: 'Choose depth of field',
+                options: ['shallow depth of field', 'medium depth of field', 'deep focus'],
+                defaultValue: 'shallow depth of field'
+            },
+            {
+                name: 'technical_specs',
+                label: 'Technical Specs',
+                type: 'select',
+                placeholder: 'Select technical specs',
+                options: ['ISO 100, warm tones', 'ISO 200, rich colors', 'ISO 100, high contrast'],
+                defaultValue: 'ISO 100, warm tones'
+            },
+            {
+                name: 'color_mood',
+                label: 'Color Mood',
+                type: 'select',
+                placeholder: 'Choose color mood',
+                options: ['warm', 'golden', 'rich amber'],
+                defaultValue: 'warm'
+            }
+        ],
+        tags: ['mood', 'hygge', 'cozy', 'christmas', 'autumn', 'rustic']
+    },
+    {
+        id: 'mood-scandinavian-daylight',
+        name: 'Bright & Airy Scandinavian Daylight',
+        description: 'Ideal for spring/summer collections, breakfast settings, minimalist products',
+        category: 'mood',
+        template: 'A mood image featuring {product} arranged on a {surface} next to a large window. The scene is styled with minimalist Scandinavian elegance, including {styling_elements}. The lighting is {lighting_style}, creating a clean and airy atmosphere with minimal shadows. Photographed with a {camera_setup}. {technical_specs}, clean composition, fresh and inviting.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                type: 'select',
+                placeholder: 'Choose surface type',
+                options: ['light ash wood surface', 'white oak table', 'birch plywood surface'],
+                defaultValue: 'light ash wood surface'
+            },
+            {
+                name: 'styling_elements',
+                label: 'Styling Elements',
+                type: 'select',
+                placeholder: 'Choose styling elements',
+                options: [
+                    'a simple ceramic vase with fresh wildflowers and a delicate white linen cloth',
+                    'minimal glass objects and fresh green plants',
+                    'clean ceramics and natural textures'
+                ],
+                defaultValue: 'a simple ceramic vase with fresh wildflowers and a delicate white linen cloth'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['bright, soft, and diffused natural daylight', 'morning sunlight through sheer curtains', 'even nordic daylight'],
+                defaultValue: 'bright, soft, and diffused natural daylight'
+            },
+            {
+                name: 'camera_setup',
+                label: 'Camera Setup',
+                type: 'select',
+                placeholder: 'Select camera setup',
+                options: ['Canon 5D Mark IV, 50mm f/1.4 lens', 'Sony A7R IV, 35mm lens', 'Fujifilm GFX, 63mm lens'],
+                defaultValue: 'Canon 5D Mark IV, 50mm f/1.4 lens'
+            },
+            {
+                name: 'technical_specs',
+                label: 'Technical Specs',
+                type: 'select',
+                placeholder: 'Select technical specs',
+                options: ['High-key lighting', 'Bright exposure, clean whites', 'Natural color grading'],
+                defaultValue: 'High-key lighting'
+            }
+        ],
+        tags: ['mood', 'scandinavian', 'bright', 'minimal', 'spring', 'summer']
+    },
+    {
+        id: 'mood-gastro-kitchen',
+        name: 'Modern Gastro & Moody Kitchen',
+        description: 'High-end kitchen tools, gastro items, professional foodie-centric mood',
+        category: 'mood',
+        template: 'A professional food photography scene featuring {product} on a {surface}. The background is a modern kitchen with {kitchen_elements}. The styling is simple and professional, with {styling_props} scattered nearby. The lighting is {lighting_style}, highlighting textures and creating a moody, high-contrast feel. Shot with a {camera_setup}, razor-sharp focus, low ISO, chiaroscuro effect.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                type: 'select',
+                placeholder: 'Choose surface type',
+                options: ['dark slate countertop', 'black marble surface', 'charcoal concrete counter'],
+                defaultValue: 'dark slate countertop'
+            },
+            {
+                name: 'kitchen_elements',
+                label: 'Kitchen Elements',
+                type: 'select',
+                placeholder: 'Select kitchen elements',
+                options: ['stainless steel and dark wood elements', 'industrial fixtures and copper accents', 'modern appliances and stone textures'],
+                defaultValue: 'stainless steel and dark wood elements'
+            },
+            {
+                name: 'styling_props',
+                label: 'Styling Props',
+                type: 'select',
+                placeholder: 'Choose styling props',
+                options: ['fresh rosemary sprigs and coarse sea salt', 'cracked black pepper and olive oil', 'fresh herbs and artisanal salt'],
+                defaultValue: 'fresh rosemary sprigs and coarse sea salt'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['directional and slightly dramatic, like a single softbox from the side', 'moody overhead lighting', 'dramatic side lighting with strong shadows'],
+                defaultValue: 'directional and slightly dramatic, like a single softbox from the side'
+            },
+            {
+                name: 'camera_setup',
+                label: 'Camera Setup',
+                type: 'select',
+                placeholder: 'Select camera setup',
+                options: ['Phase One camera', 'Hasselblad H6D', 'Canon 5DSR with macro lens'],
+                defaultValue: 'Phase One camera'
+            }
+        ],
+        tags: ['mood', 'gastro', 'kitchen', 'professional', 'food', 'moody']
+    },
+    {
+        id: 'mood-summer-alfresco',
+        name: 'Casual Summer Alfresco Lunch',
+        description: 'Perfect for outdoor products, BBQ tools, summer tableware, fresh items',
+        category: 'mood',
+        template: 'A lifestyle mood image of {product} on a {surface} outdoors. The scene is set for a casual summer lunch, with {styling_elements}. The lighting is {lighting_style}, creating dappled light and soft, natural shadows. Photographed with an {camera_setup}, beautiful bokeh in the green garden background, vibrant colors, relaxed and joyful mood.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                type: 'select',
+                placeholder: 'Choose surface type',
+                options: ['weathered teak garden table', 'rustic outdoor dining table', 'vintage picnic table'],
+                defaultValue: 'weathered teak garden table'
+            },
+            {
+                name: 'styling_elements',
+                label: 'Styling Elements',
+                type: 'select',
+                placeholder: 'Choose styling elements',
+                options: [
+                    'rumpled linen placemats, glasses of iced tea with lemon slices, and a bowl of fresh berries',
+                    'casual dinnerware, fresh fruit, and garden flowers',
+                    'outdoor cushions, fresh herbs, and summer produce'
+                ],
+                defaultValue: 'rumpled linen placemats, glasses of iced tea with lemon slices, and a bowl of fresh berries'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['bright, natural sunlight, filtered through the leaves of an overhanging tree', 'golden afternoon sun through garden foliage', 'dappled summer light'],
+                defaultValue: 'bright, natural sunlight, filtered through the leaves of an overhanging tree'
+            },
+            {
+                name: 'camera_setup',
+                label: 'Camera Setup',
+                type: 'select',
+                placeholder: 'Select camera setup',
+                options: ['85mm lens', '105mm portrait lens', '70-200mm zoom lens'],
+                defaultValue: '85mm lens'
+            }
+        ],
+        tags: ['mood', 'summer', 'outdoor', 'alfresco', 'garden', 'casual']
+    },
+    {
+        id: 'mood-holiday-festive',
+        name: 'Elegant & Festive Holiday Scene',
+        description: 'For gift items, holiday decorations, special occasion products',
+        category: 'mood',
+        template: 'A festive holiday mood image presenting {product}. The product is placed on a {surface}, surrounded by {decorative_elements} and the soft glow of fairy lights in the background (bokeh). The styling includes {styling_props}. The lighting is {lighting_style}. Shallow depth of field, shot on a full-frame camera with a prime lens, creating a dreamy and celebratory atmosphere.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                type: 'select',
+                placeholder: 'Choose surface type',
+                options: ['marble surface', 'elegant wooden surface', 'metallic tray'],
+                defaultValue: 'marble surface'
+            },
+            {
+                name: 'decorative_elements',
+                label: 'Decorative Elements',
+                type: 'select',
+                placeholder: 'Choose decorative elements',
+                options: ['elegant, out-of-focus Christmas decorations', 'shimmering ornaments and garland', 'festive baubles and tinsel'],
+                defaultValue: 'elegant, out-of-focus Christmas decorations'
+            },
+            {
+                name: 'styling_props',
+                label: 'Styling Props',
+                type: 'select',
+                placeholder: 'Choose styling props',
+                options: ['a simple, elegant pine branch and a gracefully draped silk ribbon', 'gold ribbon and holly sprigs', 'silver accents and winter berries'],
+                defaultValue: 'a simple, elegant pine branch and a gracefully draped silk ribbon'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['soft and magical, with a warm, golden glow', 'romantic candlelight ambiance', 'festive warm illumination'],
+                defaultValue: 'soft and magical, with a warm, golden glow'
+            }
+        ],
+        tags: ['mood', 'holiday', 'festive', 'christmas', 'celebration', 'elegant']
+    },
+    {
+        id: 'mood-baking-bagvaerk',
+        name: 'Rustic Baking "Bagværk" Moment',
+        description: 'Ideal for baking equipment, food storage, home baking comfort',
+        category: 'mood',
+        template: 'An authentic baking scene featuring {product} on a {surface}. The setting is a cozy kitchen, with {ingredients} visible in the soft-focus background. The lighting is {lighting_style}. Photographed with a {camera_setup}, capturing the rich textures of wood and flour. The mood is wholesome, artisanal, and comforting.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                type: 'select',
+                placeholder: 'Choose surface type',
+                options: ['flour-dusted wooden baker\'s board', 'rustic kitchen counter', 'vintage cutting board'],
+                defaultValue: 'flour-dusted wooden baker\'s board'
+            },
+            {
+                name: 'ingredients',
+                label: 'Background Ingredients',
+                type: 'select',
+                placeholder: 'Choose background ingredients',
+                options: ['ingredients like eggs in a ceramic bowl and a jar of flour', 'baking tools and fresh ingredients', 'artisanal flour and farm eggs'],
+                defaultValue: 'ingredients like eggs in a ceramic bowl and a jar of flour'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['warm and inviting, like early morning sun streaming into the kitchen', 'cozy kitchen lighting', 'golden hour through kitchen windows'],
+                defaultValue: 'warm and inviting, like early morning sun streaming into the kitchen'
+            },
+            {
+                name: 'camera_setup',
+                label: 'Camera Setup',
+                type: 'select',
+                placeholder: 'Select camera setup',
+                options: ['Hasselblad', 'Canon 5D Mark IV with 50mm lens', 'Medium format camera'],
+                defaultValue: 'Hasselblad'
+            }
+        ],
+        tags: ['mood', 'baking', 'kitchen', 'rustic', 'homemade', 'comfort']
+    },
+    {
+        id: 'mood-cocktail-hour',
+        name: 'Sophisticated Cocktail Hour',
+        description: 'Perfect for glassware, bar tools, evening elegance and entertaining',
+        category: 'mood',
+        template: 'An elegant mood image of {product} set up for cocktail hour. The surface is a {surface}, reflecting the warm, ambient light of a sophisticated lounge. Props include {bar_props} and out-of-focus glowing lights in the background. The lighting is {lighting_style}. Shot with a {camera_setup}, creating a rich, cinematic look with beautiful bokeh and a sense of occasion.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                type: 'select',
+                placeholder: 'Choose surface type',
+                options: ['dark marble bar top', 'polished black granite surface', 'elegant dark wood bar'],
+                defaultValue: 'dark marble bar top'
+            },
+            {
+                name: 'bar_props',
+                label: 'Bar Props',
+                type: 'select',
+                placeholder: 'Choose bar props',
+                options: ['a crystal mixing glass, a citrus twist', 'vintage bar tools and fresh garnishes', 'premium spirits and crystal glassware'],
+                defaultValue: 'a crystal mixing glass, a citrus twist'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['low-key and atmospheric, with a warm key light highlighting the product', 'moody lounge lighting', 'intimate bar ambiance'],
+                defaultValue: 'low-key and atmospheric, with a warm key light highlighting the product'
+            },
+            {
+                name: 'camera_setup',
+                label: 'Camera Setup',
+                type: 'select',
+                placeholder: 'Select camera setup',
+                options: ['Leica Summilux lens', 'Canon 85mm f/1.2 lens', 'Zeiss Otus 85mm lens'],
+                defaultValue: 'Leica Summilux lens'
+            }
+        ],
+        tags: ['mood', 'cocktail', 'bar', 'sophisticated', 'evening', 'elegant']
+    },
+    {
+        id: 'mood-self-care-spa',
+        name: 'Minimalist & Serene Self-Care Scene',
+        description: 'For bathroom items, personal care, relaxation and wellness products',
+        category: 'mood',
+        template: 'A serene and minimalist scene featuring {product} placed on a {surface}. The styling is sparse and clean, with {styling_elements}. The lighting is {lighting_style}, reminiscent of a bright, peaceful spa. Photographed with a {camera_setup}, clean lines, a calm and tranquil mood, very high quality photo.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'surface',
+                label: 'Surface',
+                type: 'select',
+                placeholder: 'Choose surface type',
+                options: ['light concrete surface', 'travertine surface', 'white marble platform'],
+                defaultValue: 'light concrete surface'
+            },
+            {
+                name: 'styling_elements',
+                label: 'Styling Elements',
+                type: 'select',
+                placeholder: 'Choose styling elements',
+                options: ['a single folded waffle-weave towel in a neutral beige and a delicate dried eucalyptus branch', 'organic cotton towels and natural elements', 'minimalist spa accessories'],
+                defaultValue: 'a single folded waffle-weave towel in a neutral beige and a delicate dried eucalyptus branch'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['soft, even, and natural', 'diffused spa lighting', 'clean white light'],
+                defaultValue: 'soft, even, and natural'
+            },
+            {
+                name: 'camera_setup',
+                label: 'Camera Setup',
+                type: 'select',
+                placeholder: 'Select camera setup',
+                options: ['50mm lens', '85mm portrait lens', '35mm wide lens'],
+                defaultValue: '50mm lens'
+            }
+        ],
+        tags: ['mood', 'spa', 'wellness', 'minimalist', 'calm', 'self-care']
+    },
+    {
+        id: 'mood-flat-lay',
+        name: 'Deconstructed Flat Lay / Top-Down View',
+        description: 'Versatile modern display for product sets or multiple components',
+        category: 'mood',
+        template: 'A beautifully composed top-down flat lay featuring {product}. The background is a {background} in a muted, earthy tone. The product is surrounded by {surrounding_elements}. The lighting is {lighting_style}, eliminating all shadows. Photographed from directly above, {composition_style}, creating a graphic, organized, and editorial feel.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'background',
+                label: 'Background',
+                type: 'select',
+                placeholder: 'Choose background',
+                options: ['textured linen tablecloth', 'natural burlap surface', 'woven cotton fabric'],
+                defaultValue: 'textured linen tablecloth'
+            },
+            {
+                name: 'surrounding_elements',
+                label: 'Surrounding Elements',
+                type: 'select',
+                placeholder: 'Choose surrounding elements',
+                options: ['carefully arranged complementary elements, such as artisanal crackers, fresh herbs, and small ceramic bowls', 'organized styling props and natural textures', 'geometric arrangement of related objects'],
+                defaultValue: 'carefully arranged complementary elements, such as artisanal crackers, fresh herbs, and small ceramic bowls'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['clean, bright, and even studio lighting', 'soft overhead illumination', 'perfectly even lighting'],
+                defaultValue: 'clean, bright, and even studio lighting'
+            },
+            {
+                name: 'composition_style',
+                label: 'Composition Style',
+                type: 'select',
+                placeholder: 'Choose composition style',
+                options: ['knolling style', 'geometric arrangement', 'organized grid layout'],
+                defaultValue: 'knolling style'
+            }
+        ],
+        tags: ['mood', 'flat-lay', 'top-down', 'editorial', 'organized', 'modern']
+    },
+    {
+        id: 'mood-color-story',
+        name: 'Deep & Rich Color Story',
+        description: 'Dramatic color-focused photography with powerful mood through color palette',
+        category: 'mood',
+        template: 'An atmospheric still life featuring {product}. The scene is built around a {color_palette} color palette. The background is a {background_type}. The lighting is {lighting_style}, highlighting the form of the product against the rich background. Photographed with a focus on color theory and composition. Artful, sophisticated, and dramatic. {camera_specs}.',
+        variables: [
+            {
+                name: 'product',
+                label: 'Product Description',
+                placeholder: 'your product',
+                type: 'text'
+            },
+            {
+                name: 'color_palette',
+                label: 'Color Palette',
+                type: 'select',
+                placeholder: 'Choose color palette',
+                options: ['monochromatic palette of deep jewel tones, like emerald green', 'rich sapphire blue and navy tones', 'deep burgundy and wine colors', 'forest green and earth tones'],
+                defaultValue: 'monochromatic palette of deep jewel tones, like emerald green'
+            },
+            {
+                name: 'background_type',
+                label: 'Background Type',
+                type: 'select',
+                placeholder: 'Choose background type',
+                options: ['textured, hand-painted canvas', 'rich fabric backdrop', 'painted plaster wall'],
+                defaultValue: 'textured, hand-painted canvas'
+            },
+            {
+                name: 'lighting_style',
+                label: 'Lighting Style',
+                type: 'select',
+                placeholder: 'Select lighting style',
+                options: ['moody and directional', 'dramatic side lighting', 'chiaroscuro lighting'],
+                defaultValue: 'moody and directional'
+            },
+            {
+                name: 'camera_specs',
+                label: 'Camera Specs',
+                type: 'select',
+                placeholder: 'Select camera specs',
+                options: ['Hasselblad camera, ISO 100', 'Medium format, low ISO', 'Phase One, studio setup'],
+                defaultValue: 'Hasselblad camera, ISO 100'
+            }
+        ],
+        tags: ['mood', 'color', 'dramatic', 'artistic', 'rich', 'atmospheric']
+    }
+];
+
+export const MOODBOARD_PRESETS: MoodboardPreset[] = [
+    {
+        id: 'scandinavian',
+        name: 'Scandinavian',
+        description: 'Clean lines, natural light, minimalist aesthetic',
+        thumbnail: '/preset-thumbnails/scandinavian.jpg',
+        parameters: {
+            quality: 'high',
+            background: 'auto',
+            output_format: 'png'
+        },
+        promptModifiers: {
+            prefix: 'Scandinavian design aesthetic,',
+            suffix: ', light wood tones, natural lighting, minimal composition, Nordic style',
+            styleKeywords: [
+                'scandinavian',
+                'minimal',
+                'natural light',
+                'light wood',
+                'clean lines',
+                'nordic',
+                'hygge'
+            ]
+        },
+        tags: ['minimal', 'natural', 'light', 'clean']
+    },
+    {
+        id: 'urban-industrial',
+        name: 'Urban Industrial',
+        description: 'Raw materials, dramatic lighting, city atmosphere',
+        thumbnail: '/preset-thumbnails/urban.jpg',
+        parameters: {
+            quality: 'high',
+            background: 'auto',
+            output_format: 'jpeg'
+        },
+        promptModifiers: {
+            prefix: 'Urban industrial setting,',
+            suffix: ', concrete textures, metal accents, dramatic shadows, raw materials, loft atmosphere',
+            styleKeywords: [
+                'industrial',
+                'urban',
+                'concrete',
+                'metal',
+                'dramatic lighting',
+                'raw',
+                'loft'
+            ]
+        },
+        tags: ['industrial', 'urban', 'dramatic', 'raw']
+    },
+    {
+        id: 'minimalist',
+        name: 'Minimalist',
+        description: 'Pure simplicity, negative space, essential elements only',
+        thumbnail: '/preset-thumbnails/minimalist.jpg',
+        parameters: {
+            quality: 'high',
+            background: 'transparent',
+            output_format: 'png'
+        },
+        promptModifiers: {
+            prefix: 'Minimalist composition,',
+            suffix: ', negative space, pure simplicity, essential elements only, clean background',
+            styleKeywords: [
+                'minimalist',
+                'simple',
+                'negative space',
+                'clean',
+                'pure',
+                'essential',
+                'uncluttered'
+            ]
+        },
+        tags: ['minimal', 'simple', 'clean', 'space']
+    },
+    {
+        id: 'surreal-artistic',
+        name: 'Surreal',
+        description: 'Dreamlike compositions, unusual perspectives, creative interpretations',
+        thumbnail: '/preset-thumbnails/surreal.jpg',
+        parameters: {
+            quality: 'high',
+            background: 'auto',
+            output_format: 'png'
+        },
+        promptModifiers: {
+            prefix: 'Surreal artistic composition,',
+            suffix: ', dreamlike atmosphere, unusual perspective, creative interpretation, artistic vision',
+            styleKeywords: [
+                'surreal',
+                'dreamlike',
+                'artistic',
+                'unusual',
+                'creative',
+                'imaginative',
+                'abstract'
+            ]
+        },
+        tags: ['surreal', 'artistic', 'creative', 'dreamlike']
+    },
+    {
+        id: 'luxe-elegant',
+        name: 'Luxe Elegant',
+        description: 'Sophisticated styling, premium materials, refined aesthetics',
+        thumbnail: '/preset-thumbnails/luxe.jpg',
+        parameters: {
+            quality: 'high',
+            background: 'auto',
+            output_format: 'jpeg'
+        },
+        promptModifiers: {
+            prefix: 'Luxury elegant styling,',
+            suffix: ', premium materials, sophisticated composition, refined aesthetics, high-end presentation',
+            styleKeywords: [
+                'luxury',
+                'elegant',
+                'sophisticated',
+                'premium',
+                'refined',
+                'high-end',
+                'exclusive'
+            ]
+        },
+        tags: ['luxury', 'elegant', 'sophisticated', 'premium']
+    },
+    {
+        id: 'natural-organic',
+        name: 'Natural Organic',
+        description: 'Earth tones, natural textures, organic compositions',
+        thumbnail: '/preset-thumbnails/natural.jpg',
+        parameters: {
+            quality: 'high',
+            background: 'auto',
+            output_format: 'jpeg'
+        },
+        promptModifiers: {
+            prefix: 'Natural organic styling,',
+            suffix: ', earth tones, natural textures, organic composition, botanical elements',
+            styleKeywords: [
+                'natural',
+                'organic',
+                'earth tones',
+                'botanical',
+                'sustainable',
+                'eco-friendly',
+                'raw materials'
+            ]
+        },
+        tags: ['natural', 'organic', 'earth', 'botanical']
+    }
+];
+
+export function processTemplate(template: PromptTemplate, variables: Record<string, string>): string {
+    let processedPrompt = template.template;
+    
+    // Replace variables in the template
+    template.variables.forEach(variable => {
+        const value = variables[variable.name] || variable.defaultValue || '';
+        const placeholder = `{${variable.name}}`;
+        processedPrompt = processedPrompt.replace(new RegExp(placeholder, 'g'), value);
+    });
+    
+    return processedPrompt;
+}
+
+export function getTemplatesByCategory(categoryId: string): PromptTemplate[] {
+    return PROMPT_TEMPLATES.filter(template => template.category === categoryId);
+}
+
+export function searchTemplates(query: string): PromptTemplate[] {
+    const searchTerm = query.toLowerCase();
+    return PROMPT_TEMPLATES.filter(template => 
+        template.name.toLowerCase().includes(searchTerm) ||
+        template.description.toLowerCase().includes(searchTerm) ||
+        template.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+    );
+}
+
+export function getPresetsByTags(tags: string[]): MoodboardPreset[] {
+    return MOODBOARD_PRESETS.filter(preset =>
+        preset.tags.some(tag => tags.includes(tag))
+    );
+}

@@ -13,8 +13,9 @@ export function ModeToggle({ currentMode, onModeChange }: ModeToggleProps) {
             value={currentMode}
             onValueChange={(value) => onModeChange(value as 'generate' | 'edit')}
             className='w-auto'>
-            <TabsList className='grid h-auto grid-cols-2 gap-1 rounded-md border-none bg-transparent p-0'>
-                <TabsTrigger
+            <TabsList className='grid h-auto grid-cols-1 gap-1 rounded-md border-none bg-transparent p-0'>
+                {/* Generate tab commented out for future reactivation */}
+                {/* <TabsTrigger
                     value='generate'
                     className={`rounded-md border px-3 py-1 text-sm transition-colors ${
                         currentMode === 'generate'
@@ -22,7 +23,7 @@ export function ModeToggle({ currentMode, onModeChange }: ModeToggleProps) {
                             : 'border-dashed border-white/30 bg-transparent text-white/60 hover:border-white/50 hover:text-white/80'
                     } `}>
                     Generate
-                </TabsTrigger>
+                </TabsTrigger> */}
                 <TabsTrigger
                     value='edit'
                     className={`rounded-md border px-3 py-1 text-sm transition-colors ${
