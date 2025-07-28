@@ -11,7 +11,7 @@ import { PasswordDialog } from '@/components/password-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { calculateApiCost, type CostDetails } from '@/lib/cost-utils';
 import { db, type ImageRecord } from '@/lib/db';
-// import { downloadImages, type DownloadableImage } from '@/lib/download-manager'; // Commented out - moodboard disabled
+import { downloadSingleImage, type DownloadableImage } from '@/lib/download-manager';
 // import { MOODBOARD_PRESETS } from '@/lib/prompt-templates'; // Commented out - moodboard disabled
 // import type { MoodboardPreset } from '@/types/templates'; // Commented out - moodboard disabled
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -35,11 +35,11 @@ export type HistoryMetadata = {
     output_format?: 'png' | 'jpeg' | 'webp';
 };
 
-// type DrawnPoint = { // Commented out - mask functionality removed
-//     x: number;
-//     y: number;
-//     size: number;
-// };
+type DrawnPoint = {
+    x: number;
+    y: number;
+    size: number;
+};
 
 const MAX_EDIT_IMAGES = 10;
 
@@ -95,17 +95,18 @@ export default function HomePage() {
     const [editSourceImagePreviewUrls, setEditSourceImagePreviewUrls] = React.useState<string[]>([]);
     const [editPrompt, setEditPrompt] = React.useState('');
     const [editN, setEditN] = React.useState([1]);
+    const [isEditingGeneratedImage, setIsEditingGeneratedImage] = React.useState(false);
     // const [editSize, setEditSize] = React.useState<EditingFormData['size']>('auto'); // Commented out - size fixed to square
     // const [editQuality, setEditQuality] = React.useState<EditingFormData['quality']>('auto'); // Commented out - quality fixed to high
-    // const [editBrushSize, setEditBrushSize] = React.useState([20]); // Commented out - mask functionality removed
-    // const [editShowMaskEditor, setEditShowMaskEditor] = React.useState(false); // Commented out - mask functionality removed
-    // const [editGeneratedMaskFile, setEditGeneratedMaskFile] = React.useState<File | null>(null); // Commented out - mask functionality removed
-    // const [editIsMaskSaved, setEditIsMaskSaved] = React.useState(false); // Commented out - mask functionality removed
-    // const [editOriginalImageSize, setEditOriginalImageSize] = React.useState<{ width: number; height: number } | null>(
-    //     null
-    // ); // Commented out - mask functionality removed
-    // const [editDrawnPoints, setEditDrawnPoints] = React.useState<DrawnPoint[]>([]); // Commented out - mask functionality removed
-    // const [editMaskPreviewUrl, setEditMaskPreviewUrl] = React.useState<string | null>(null); // Commented out - mask functionality removed
+    const [editBrushSize, setEditBrushSize] = React.useState([20]);
+    const [editShowMaskEditor, setEditShowMaskEditor] = React.useState(false);
+    const [editGeneratedMaskFile, setEditGeneratedMaskFile] = React.useState<File | null>(null);
+    const [editIsMaskSaved, setEditIsMaskSaved] = React.useState(false);
+    const [editOriginalImageSize, setEditOriginalImageSize] = React.useState<{ width: number; height: number } | null>(
+        null
+    );
+    const [editDrawnPoints, setEditDrawnPoints] = React.useState<DrawnPoint[]>([]);
+    const [editMaskPreviewUrl, setEditMaskPreviewUrl] = React.useState<string | null>(null);
 
     // Generation state variables commented out - generation disabled
     // const [genPrompt, setGenPrompt] = React.useState('');
@@ -341,9 +342,9 @@ export default function HomePage() {
         editImageFiles.forEach((file, index) => {
             apiFormData.append(`image_${index}`, file, file.name);
         });
-        // if (editGeneratedMaskFile) { // Commented out - mask functionality removed
-        //     apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
-        // }
+        if (editGeneratedMaskFile) {
+            apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
+        }
 
         console.log('Sending request to /api/images with mode:', mode);
 
@@ -502,7 +503,7 @@ export default function HomePage() {
         // editSize, // Commented out - size fixed to square
         // editQuality, // Commented out - quality fixed to high
         editImageFiles,
-        // editGeneratedMaskFile, // Commented out - mask functionality removed
+        editGeneratedMaskFile,
         setBlobUrlCache
     ]);
 
@@ -576,7 +577,7 @@ export default function HomePage() {
         }
     };
 
-    const handleSendToEdit = async (filename: string) => {
+    const handleSendToEdit = React.useCallback(async (filename: string) => {
         if (isSendingToEdit) return;
         setIsSendingToEdit(true);
         setError(null);
@@ -613,6 +614,7 @@ export default function HomePage() {
                 }
             } else {
                 console.log(`Fetching image ${filename} from API...`);
+                // Always use the API endpoint for fetching images in filesystem mode
                 const response = await fetch(`/api/image/${filename}`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch image: ${response.statusText}`);
@@ -633,12 +635,16 @@ export default function HomePage() {
 
             setEditImageFiles([newFile]);
             setEditSourceImagePreviewUrls([newPreviewUrl]);
+            
+            // Check if this image was generated (has a timestamp in filename indicating it's from our system)
+            const isFromGeneration = /^\d{13}-\d+\.(png|jpg|jpeg|webp)$/i.test(filename);
+            setIsEditingGeneratedImage(isFromGeneration);
 
             if (mode === 'generate') {
                 setMode('edit');
             }
 
-            console.log(`Successfully set ${filename} in edit form.`);
+            console.log(`Successfully set ${filename} in edit form. Generated image: ${isFromGeneration}`);
         } catch (err: unknown) {
             console.error('Error sending image to edit:', err);
             const errorMessage = err instanceof Error ? err.message : 'Failed to send image to edit form.';
@@ -646,7 +652,7 @@ export default function HomePage() {
         } finally {
             setIsSendingToEdit(false);
         }
-    };
+    }, [isSendingToEdit, allDbImages, editSourceImagePreviewUrls, editImageFiles, mode, setIsEditingGeneratedImage]);
 
     const executeDeleteItem = async (item: HistoryMetadata) => {
         if (!item) return;
@@ -719,6 +725,48 @@ export default function HomePage() {
         setItemToDeleteConfirm(null);
     };
 
+    const handleDownloadImage = React.useCallback(async (filename: string, imageUrl: string) => {
+        try {
+            // For filesystem mode, we need to use the API endpoint instead of the direct path
+            const apiUrl = effectiveStorageModeClient === 'fs' ? `/api/image/${filename}` : imageUrl;
+            
+            const downloadableImage: DownloadableImage = {
+                filename,
+                url: apiUrl,
+                timestamp: Date.now()
+            };
+            
+            await downloadSingleImage(downloadableImage);
+            console.log(`Successfully downloaded ${filename}`);
+        } catch (error) {
+            console.error('Error downloading image:', error);
+            setError(`Failed to download image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }, []);
+
+    const handleContinueEditing = React.useCallback(async (filename: string) => {
+        try {
+            // First, send the image to edit form
+            await handleSendToEdit(filename);
+            
+            // Ensure we're marked as editing a generated image
+            setIsEditingGeneratedImage(true);
+            
+            // Then append "further edit this image" to the current prompt
+            if (editPrompt.trim()) {
+                const continuationPrompt = editPrompt + ', further edit this image';
+                setEditPrompt(continuationPrompt);
+            } else {
+                setEditPrompt('Further edit this image');
+            }
+            
+            console.log(`Continuing to edit ${filename}`);
+        } catch (error) {
+            console.error('Error setting up continued editing:', error);
+            setError(`Failed to continue editing: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }, [editPrompt, handleSendToEdit, setEditPrompt]);
+
     // Moodboard handlers commented out
 
     return (
@@ -736,7 +784,7 @@ export default function HomePage() {
             />
             <div className='w-full max-w-7xl space-y-6'>
                 <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-                    <div className='relative flex h-[70vh] min-h-[600px] flex-col lg:col-span-1'>
+                    <div className='relative flex h-[95vh] min-h-[800px] flex-col lg:col-span-1'>
                         {/* GenerationForm commented out for future reactivation */}
                         {/* <div className={mode === 'generate' ? 'block h-full w-full' : 'hidden'}>
                             <GenerationForm
@@ -783,10 +831,25 @@ export default function HomePage() {
                                 setEditPrompt={setEditPrompt}
                                 editN={editN}
                                 setEditN={setEditN}
+                                isEditingGeneratedImage={isEditingGeneratedImage}
+                                editBrushSize={editBrushSize}
+                                setEditBrushSize={setEditBrushSize}
+                                editShowMaskEditor={editShowMaskEditor}
+                                setEditShowMaskEditor={setEditShowMaskEditor}
+                                editGeneratedMaskFile={editGeneratedMaskFile}
+                                setEditGeneratedMaskFile={setEditGeneratedMaskFile}
+                                editIsMaskSaved={editIsMaskSaved}
+                                setEditIsMaskSaved={setEditIsMaskSaved}
+                                editOriginalImageSize={editOriginalImageSize}
+                                setEditOriginalImageSize={setEditOriginalImageSize}
+                                editDrawnPoints={editDrawnPoints}
+                                setEditDrawnPoints={setEditDrawnPoints}
+                                editMaskPreviewUrl={editMaskPreviewUrl}
+                                setEditMaskPreviewUrl={setEditMaskPreviewUrl}
                             />
                         </div>
                     </div>
-                    <div className='flex h-[70vh] min-h-[600px] flex-col lg:col-span-1'>
+                    <div className='flex h-[95vh] min-h-[800px] flex-col lg:col-span-1'>
                         {error && (
                             <Alert variant='destructive' className='mb-4 border-red-500/50 bg-red-900/20 text-red-300'>
                                 <AlertTitle className='text-red-200'>Error</AlertTitle>
@@ -800,6 +863,8 @@ export default function HomePage() {
                             altText='Generated image output'
                             isLoading={isLoading || isSendingToEdit}
                             onSendToEdit={handleSendToEdit}
+                            onDownload={handleDownloadImage}
+                            onContinueEditing={handleContinueEditing}
                             currentMode={mode}
                             baseImagePreviewUrl={editSourceImagePreviewUrls[0] || null}
                         />

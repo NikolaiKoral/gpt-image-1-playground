@@ -20,6 +20,8 @@ import {
     getTemplatesByCategory,
     searchTemplates
 } from '@/lib/prompt-templates';
+import { PromptTagSelector } from '@/components/prompt-tag-selector';
+import { formatTagsForPrompt } from '@/lib/prompt-tags';
 
 // Debug: Log templates on import - commented out
 // console.log('Total templates loaded:', PROMPT_TEMPLATES.length);
@@ -36,7 +38,8 @@ import {
     Wand2,
     RefreshCw,
     Copy,
-    Check
+    Check,
+    ArrowRight
 } from 'lucide-react';
 import * as React from 'react';
 
@@ -64,6 +67,9 @@ export function PromptTemplateSelector({
     const [searchQuery, setSearchQuery] = React.useState('');
     const [activeTab, setActiveTab] = React.useState('browse');
     const [copiedTemplate, setCopiedTemplate] = React.useState<string | null>(null);
+    const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
+    const [customPromptText, setCustomPromptText] = React.useState('');
+    const [transferredTemplate, setTransferredTemplate] = React.useState<string | null>(null);
 
     // Initialize template variables when template changes
     React.useEffect(() => {
@@ -78,11 +84,32 @@ export function PromptTemplateSelector({
 
     // Process template and update parent component
     React.useEffect(() => {
-        if (selectedTemplate && Object.keys(templateVariables).length > 0) {
+        if (activeTab === 'browse' && selectedTemplate && Object.keys(templateVariables).length > 0) {
             const processedPrompt = processTemplate(selectedTemplate, templateVariables);
             onChange(processedPrompt);
+        } else if (activeTab === 'custom') {
+            const tagsText = selectedTags.length > 0 ? formatTagsForPrompt(selectedTags) : '';
+            const combinedPrompt = customPromptText && tagsText 
+                ? `${customPromptText}, ${tagsText}`
+                : customPromptText || tagsText;
+            onChange(combinedPrompt);
         }
-    }, [selectedTemplate, templateVariables, onChange]);
+    }, [selectedTemplate, templateVariables, activeTab, customPromptText, selectedTags, onChange]);
+
+    // Initialize custom prompt text from value when switching to custom tab
+    React.useEffect(() => {
+        if (activeTab === 'custom' && !customPromptText && value && !selectedTemplate) {
+            setCustomPromptText(value);
+        }
+    }, [activeTab, value, customPromptText, selectedTemplate]);
+
+    // Clear template selection when switching to browse tab if custom prompt has content
+    React.useEffect(() => {
+        if (activeTab === 'browse' && customPromptText) {
+            // If user switches back to browse while having custom content, 
+            // don't interfere with their template selection
+        }
+    }, [activeTab, customPromptText]);
 
     const handleTemplateSelect = (template: PromptTemplate) => {
         setSelectedTemplate(template);
@@ -101,6 +128,55 @@ export function PromptTemplateSelector({
         onChange('');
     };
 
+    const handleCustomPromptChange = (newText: string) => {
+        setCustomPromptText(newText);
+    };
+
+    const handleTagsChange = (newTags: string[]) => {
+        setSelectedTags(newTags);
+    };
+
+    const handleClearCustom = () => {
+        setCustomPromptText('');
+        setSelectedTags([]);
+        onChange('');
+    };
+
+    const handleUseAsCustomPrompt = () => {
+        if (selectedTemplate) {
+            const processedPrompt = processTemplate(selectedTemplate, templateVariables);
+            setCustomPromptText(processedPrompt);
+            setActiveTab('custom');
+            // Show feedback
+            setTransferredTemplate(selectedTemplate.name);
+            setTimeout(() => setTransferredTemplate(null), 3000);
+            // Clear selected template since we're moving to custom
+            setSelectedTemplate(null);
+            setTemplateVariables({});
+        }
+    };
+
+    const handleCopyToCustom = (template: PromptTemplate, e: React.MouseEvent) => {
+        e.stopPropagation();
+        // Create default variables for template
+        const defaultVariables: Record<string, string> = {};
+        template.variables.forEach(variable => {
+            defaultVariables[variable.name] = variable.defaultValue || variable.placeholder || '';
+        });
+        
+        const processedPrompt = processTemplate(template, defaultVariables);
+        setCustomPromptText(processedPrompt);
+        setActiveTab('custom');
+        
+        // Show feedback
+        setTransferredTemplate(template.name);
+        setTimeout(() => setTransferredTemplate(null), 3000);
+        
+        // Clear any selected template
+        setSelectedTemplate(null);
+        setTemplateVariables({});
+    };
+
     const handleCopyTemplate = async (templateText: string, templateId: string) => {
         try {
             await navigator.clipboard.writeText(templateText);
@@ -115,8 +191,15 @@ export function PromptTemplateSelector({
         ? searchTemplates(searchQuery)
         : PROMPT_TEMPLATES;
 
-    const processedPrompt = selectedTemplate 
+    const processedPrompt = activeTab === 'browse' && selectedTemplate
         ? processTemplate(selectedTemplate, templateVariables)
+        : activeTab === 'custom'
+        ? (() => {
+            const tagsText = selectedTags.length > 0 ? formatTagsForPrompt(selectedTags) : '';
+            return customPromptText && tagsText 
+                ? `${customPromptText}, ${tagsText}`
+                : customPromptText || tagsText;
+        })()
         : value;
 
     return (
@@ -147,7 +230,7 @@ export function PromptTemplateSelector({
 
                     {/* Template Categories or Search Results */}
                     {!searchQuery ? (
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             {/* {console.log('All template categories:', TEMPLATE_CATEGORIES.map(c => c.id))} */}
                             {TEMPLATE_CATEGORIES.map(category => {
                                 const categoryTemplates = getTemplatesByCategory(category.id);
@@ -161,7 +244,7 @@ export function PromptTemplateSelector({
                                 }
                                 
                                 return (
-                                    <div key={category.id} className="space-y-3">
+                                    <div key={category.id} className="space-y-2">
                                         <div className="flex items-center gap-2">
                                             <IconComponent className="h-5 w-5 text-primary" />
                                             <div>
@@ -170,7 +253,7 @@ export function PromptTemplateSelector({
                                             </div>
                                         </div>
                                         
-                                        <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="grid gap-2 sm:grid-cols-2">
                                             {categoryTemplates.map(template => (
                                                 <Card
                                                     key={template.id}
@@ -180,30 +263,42 @@ export function PromptTemplateSelector({
                                                     )}
                                                     onClick={() => handleTemplateSelect(template)}
                                                 >
-                                                    <CardHeader className="pb-2">
+                                                    <CardHeader className="pb-1">
                                                         <div className="flex items-start justify-between">
                                                             <CardTitle className="text-base">{template.name}</CardTitle>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 p-0"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleCopyTemplate(template.template, template.id);
-                                                                }}
-                                                            >
-                                                                {copiedTemplate === template.id ? (
-                                                                    <Check className="h-4 w-4 text-green-600" />
-                                                                ) : (
-                                                                    <Copy className="h-4 w-4" />
-                                                                )}
-                                                            </Button>
+                                                            <div className="flex gap-1">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 p-0"
+                                                                    onClick={(e) => handleCopyToCustom(template, e)}
+                                                                    title="Copy to Custom Prompt"
+                                                                >
+                                                                    <ArrowRight className="h-4 w-4 text-green-600" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 p-0"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleCopyTemplate(template.template, template.id);
+                                                                    }}
+                                                                    title="Copy template text"
+                                                                >
+                                                                    {copiedTemplate === template.id ? (
+                                                                        <Check className="h-4 w-4 text-green-600" />
+                                                                    ) : (
+                                                                        <Copy className="h-4 w-4" />
+                                                                    )}
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                         <CardDescription className="text-xs">
                                                             {template.description}
                                                         </CardDescription>
                                                     </CardHeader>
-                                                    <CardContent className="pt-0">
+                                                    <CardContent className="pt-0 px-4 pb-3">
                                                         <div className="flex flex-wrap gap-1">
                                                             {template.tags.slice(0, 3).map(tag => (
                                                                 <span
@@ -223,11 +318,11 @@ export function PromptTemplateSelector({
                             })}
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             <h3 className="text-lg font-semibold">
                                 Search Results ({filteredTemplates.length})
                             </h3>
-                            <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="grid gap-2 sm:grid-cols-2">
                                 {filteredTemplates.map(template => (
                                     <Card
                                         key={template.id}
@@ -237,30 +332,42 @@ export function PromptTemplateSelector({
                                         )}
                                         onClick={() => handleTemplateSelect(template)}
                                     >
-                                        <CardHeader className="pb-2">
+                                        <CardHeader className="pb-1">
                                             <div className="flex items-start justify-between">
                                                 <CardTitle className="text-base">{template.name}</CardTitle>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="h-8 w-8 p-0"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleCopyTemplate(template.template, template.id);
-                                                    }}
-                                                >
-                                                    {copiedTemplate === template.id ? (
-                                                        <Check className="h-4 w-4 text-green-600" />
-                                                    ) : (
-                                                        <Copy className="h-4 w-4" />
-                                                    )}
-                                                </Button>
+                                                <div className="flex gap-1">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={(e) => handleCopyToCustom(template, e)}
+                                                        title="Copy to Custom Prompt"
+                                                    >
+                                                        <ArrowRight className="h-4 w-4 text-green-600" />
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCopyTemplate(template.template, template.id);
+                                                        }}
+                                                        title="Copy template text"
+                                                    >
+                                                        {copiedTemplate === template.id ? (
+                                                            <Check className="h-4 w-4 text-green-600" />
+                                                        ) : (
+                                                            <Copy className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                </div>
                                             </div>
                                             <CardDescription className="text-xs">
                                                 {template.description}
                                             </CardDescription>
                                         </CardHeader>
-                                        <CardContent className="pt-0">
+                                        <CardContent className="pt-0 px-4 pb-3">
                                             <div className="flex flex-wrap gap-1">
                                                 {template.tags.slice(0, 3).map(tag => (
                                                     <span
@@ -287,17 +394,28 @@ export function PromptTemplateSelector({
                                         <Wand2 className="h-5 w-5" />
                                         Customize Template
                                     </CardTitle>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={handleClearTemplate}
-                                    >
-                                        <RefreshCw className="h-4 w-4 mr-2" />
-                                        Clear
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={handleUseAsCustomPrompt}
+                                            className="bg-green-600 hover:bg-green-700"
+                                        >
+                                            <Wand2 className="h-4 w-4 mr-2" />
+                                            Use as Custom Prompt
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleClearTemplate}
+                                        >
+                                            <RefreshCw className="h-4 w-4 mr-2" />
+                                            Clear
+                                        </Button>
+                                    </div>
                                 </div>
                                 <CardDescription>
-                                    Fill in the variables to customize your prompt
+                                    Fill in the variables to customize your prompt, then use as custom prompt to enhance with tags
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -338,23 +456,58 @@ export function PromptTemplateSelector({
                 </TabsContent>
 
                 <TabsContent value="custom" className="space-y-4">
+                    {/* Transfer Feedback */}
+                    {transferredTemplate && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-200">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">
+                                Template &quot;{transferredTemplate}&quot; transferred to custom prompt
+                            </span>
+                        </div>
+                    )}
+                    
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Wand2 className="h-5 w-5" />
-                                Custom Prompt
-                            </CardTitle>
-                            <CardDescription>
-                                Write your own prompt or modify a template
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Wand2 className="h-5 w-5" />
+                                        Custom Prompt
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Write your own prompt or modify a template
+                                    </CardDescription>
+                                </div>
+                                {(customPromptText || selectedTags.length > 0) && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleClearCustom}
+                                    >
+                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                        Clear All
+                                    </Button>
+                                )}
+                            </div>
                         </CardHeader>
-                        <CardContent>
-                            <Textarea
-                                placeholder="Enter your custom prompt here..."
-                                value={value}
-                                onChange={(e) => onChange(e.target.value)}
-                                rows={4}
-                                className="resize-none"
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="custom-prompt">Your Prompt</Label>
+                                <Textarea
+                                    id="custom-prompt"
+                                    placeholder="Enter your custom prompt here..."
+                                    value={customPromptText}
+                                    onChange={(e) => handleCustomPromptChange(e.target.value)}
+                                    rows={3}
+                                    className="resize-none"
+                                />
+                            </div>
+                            
+                            <PromptTagSelector
+                                selectedTags={selectedTags}
+                                onTagsChange={handleTagsChange}
+                                maxTags={15}
+                                showConflicts={true}
                             />
                         </CardContent>
                     </Card>

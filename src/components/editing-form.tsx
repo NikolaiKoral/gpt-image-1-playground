@@ -5,34 +5,26 @@ import { MultiImageDropZone, type ImageFile } from '@/components/multi-image-dro
 import { PromptTemplateSelector } from '@/components/prompt-template-selector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Input } from '@/components/ui/input'; // Commented out - mask functionality removed
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Commented out - quality/size selectors removed
 import { Slider } from '@/components/ui/slider';
 import {
-    // Eraser, // Commented out - mask functionality removed
-    // Save, // Commented out - mask functionality removed
-    // Square, // Commented out - size selector removed
-    // RectangleHorizontal, // Commented out - size selector removed
-    // RectangleVertical, // Commented out - size selector removed
-    // Sparkles, // Commented out - auto options removed
-    // Tally1, // Commented out - quality selector removed
-    // Tally2, // Commented out - quality selector removed
-    // Tally3, // Commented out - quality selector removed
+    Eraser,
+    Save,
     Loader2,
-    // ScanEye, // Commented out - mask functionality removed
-    // UploadCloud, // Commented out - mask functionality removed
+    ScanEye,
+    UploadCloud,
     Lock,
     LockOpen
 } from 'lucide-react';
-// import Image from 'next/image'; // Commented out - mask functionality removed
+import Image from 'next/image';
 import * as React from 'react';
 
-// type DrawnPoint = { // Commented out - mask functionality removed
-//     x: number;
-//     y: number;
-//     size: number;
-// };
+type DrawnPoint = {
+    x: number;
+    y: number;
+    size: number;
+};
 
 export type EditingFormData = {
     prompt: string;
@@ -60,24 +52,21 @@ type EditingFormProps = {
     setEditPrompt: React.Dispatch<React.SetStateAction<string>>;
     editN: number[];
     setEditN: React.Dispatch<React.SetStateAction<number[]>>;
-    // editSize: EditingFormData['size']; // Commented out - size is now fixed to square
-    // setEditSize: React.Dispatch<React.SetStateAction<EditingFormData['size']>>; // Commented out - size is now fixed to square
-    // editQuality: EditingFormData['quality']; // Commented out - quality is now fixed to high
-    // setEditQuality: React.Dispatch<React.SetStateAction<EditingFormData['quality']>>; // Commented out - quality is now fixed to high
-    // editBrushSize: number[]; // Commented out - mask functionality removed
-    // setEditBrushSize: React.Dispatch<React.SetStateAction<number[]>>; // Commented out - mask functionality removed
-    // editShowMaskEditor: boolean; // Commented out - mask functionality removed
-    // setEditShowMaskEditor: React.Dispatch<React.SetStateAction<boolean>>; // Commented out - mask functionality removed
-    // editGeneratedMaskFile: File | null; // Commented out - mask functionality removed
-    // setEditGeneratedMaskFile: React.Dispatch<React.SetStateAction<File | null>>; // Commented out - mask functionality removed
-    // editIsMaskSaved: boolean; // Commented out - mask functionality removed
-    // setEditIsMaskSaved: React.Dispatch<React.SetStateAction<boolean>>; // Commented out - mask functionality removed
-    // editOriginalImageSize: { width: number; height: number } | null; // Commented out - mask functionality removed
-    // setEditOriginalImageSize: React.Dispatch<React.SetStateAction<{ width: number; height: number } | null>>; // Commented out - mask functionality removed
-    // editDrawnPoints: DrawnPoint[]; // Commented out - mask functionality removed
-    // setEditDrawnPoints: React.Dispatch<React.SetStateAction<DrawnPoint[]>>; // Commented out - mask functionality removed
-    // editMaskPreviewUrl: string | null; // Commented out - mask functionality removed
-    // setEditMaskPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>; // Commented out - mask functionality removed
+    isEditingGeneratedImage: boolean;
+    editBrushSize: number[];
+    setEditBrushSize: React.Dispatch<React.SetStateAction<number[]>>;
+    editShowMaskEditor: boolean;
+    setEditShowMaskEditor: React.Dispatch<React.SetStateAction<boolean>>;
+    editGeneratedMaskFile: File | null;
+    setEditGeneratedMaskFile: React.Dispatch<React.SetStateAction<File | null>>;
+    editIsMaskSaved: boolean;
+    setEditIsMaskSaved: React.Dispatch<React.SetStateAction<boolean>>;
+    editOriginalImageSize: { width: number; height: number } | null;
+    setEditOriginalImageSize: React.Dispatch<React.SetStateAction<{ width: number; height: number } | null>>;
+    editDrawnPoints: DrawnPoint[];
+    setEditDrawnPoints: React.Dispatch<React.SetStateAction<DrawnPoint[]>>;
+    editMaskPreviewUrl: string | null;
+    setEditMaskPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 // const RadioItemWithIcon = ({ // Commented out - radio selectors removed  
@@ -121,97 +110,96 @@ export function EditingForm({
     setEditPrompt,
     editN,
     setEditN,
-    // editSize, // Commented out - size is now fixed to square  
-    // setEditSize, // Commented out - size is now fixed to square
-    // editQuality, // Commented out - quality is now fixed to high
-    // setEditQuality, // Commented out - quality is now fixed to high
-    // editBrushSize, // Commented out - mask functionality removed
-    // setEditBrushSize, // Commented out - mask functionality removed
-    // editShowMaskEditor, // Commented out - mask functionality removed
-    // setEditShowMaskEditor, // Commented out - mask functionality removed
-    // editGeneratedMaskFile, // Commented out - mask functionality removed
-    // setEditGeneratedMaskFile, // Commented out - mask functionality removed
-    // editIsMaskSaved, // Commented out - mask functionality removed
-    // setEditIsMaskSaved, // Commented out - mask functionality removed
-    // editOriginalImageSize, // Commented out - mask functionality removed
-    // setEditOriginalImageSize, // Commented out - mask functionality removed
-    // editDrawnPoints, // Commented out - mask functionality removed
-    // setEditDrawnPoints, // Commented out - mask functionality removed
-    // editMaskPreviewUrl, // Commented out - mask functionality removed
-    // setEditMaskPreviewUrl // Commented out - mask functionality removed
+    isEditingGeneratedImage,
+    editBrushSize,
+    setEditBrushSize,
+    editShowMaskEditor,
+    setEditShowMaskEditor,
+    editGeneratedMaskFile,
+    setEditGeneratedMaskFile,
+    editIsMaskSaved,
+    setEditIsMaskSaved,
+    editOriginalImageSize,
+    setEditOriginalImageSize,
+    editDrawnPoints,
+    setEditDrawnPoints,
+    editMaskPreviewUrl,
+    setEditMaskPreviewUrl
 }: EditingFormProps) {
-    // const [firstImagePreviewUrl, setFirstImagePreviewUrl] = React.useState<string | null>(null); // Commented out - mask functionality removed
+    const [firstImagePreviewUrl, setFirstImagePreviewUrl] = React.useState<string | null>(null);
     const [imageDropZoneFiles, setImageDropZoneFiles] = React.useState<ImageFile[]>([]);
 
-    // const canvasRef = React.useRef<HTMLCanvasElement>(null); // Commented out - mask functionality removed
-    // const visualFeedbackCanvasRef = React.useRef<HTMLCanvasElement | null>(null); // Commented out - mask functionality removed
-    // const isDrawing = React.useRef(false); // Commented out - mask functionality removed
-    // const lastPos = React.useRef<{ x: number; y: number } | null>(null); // Commented out - mask functionality removed
-    // const maskInputRef = React.useRef<HTMLInputElement>(null); // Commented out - mask functionality removed
+    const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const visualFeedbackCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
+    const isDrawing = React.useRef(false);
+    const lastPos = React.useRef<{ x: number; y: number } | null>(null);
+    const maskInputRef = React.useRef<HTMLInputElement>(null);
 
-    // React.useEffect(() => { // Commented out - mask functionality removed
-    //     if (editOriginalImageSize) {
-    //         if (!visualFeedbackCanvasRef.current) {
-    //             visualFeedbackCanvasRef.current = document.createElement('canvas');
-    //         }
-    //         visualFeedbackCanvasRef.current.width = editOriginalImageSize.width;
-    //         visualFeedbackCanvasRef.current.height = editOriginalImageSize.height;
-    //     }
-    // }, [editOriginalImageSize]);
+    React.useEffect(() => {
+        if (isEditingGeneratedImage && editOriginalImageSize) {
+            if (!visualFeedbackCanvasRef.current) {
+                visualFeedbackCanvasRef.current = document.createElement('canvas');
+            }
+            visualFeedbackCanvasRef.current.width = editOriginalImageSize.width;
+            visualFeedbackCanvasRef.current.height = editOriginalImageSize.height;
+        }
+    }, [editOriginalImageSize, isEditingGeneratedImage]);
 
-    // React.useEffect(() => { // Commented out - mask functionality removed
-    //     setEditGeneratedMaskFile(null);
-    //     setEditIsMaskSaved(false);
-    //     setEditOriginalImageSize(null);
-    //     setFirstImagePreviewUrl(null);
-    //     setEditDrawnPoints([]);
-    //     setEditMaskPreviewUrl(null);
+    React.useEffect(() => {
+        setEditGeneratedMaskFile(null);
+        setEditIsMaskSaved(false);
+        setEditOriginalImageSize(null);
+        setFirstImagePreviewUrl(null);
+        setEditDrawnPoints([]);
+        setEditMaskPreviewUrl(null);
 
-    //     if (imageFiles.length > 0 && sourceImagePreviewUrls.length > 0) {
-    //         const img = new window.Image();
-    //         img.onload = () => {
-    //             setEditOriginalImageSize({ width: img.width, height: img.height });
-    //         };
-    //         img.src = sourceImagePreviewUrls[0];
-    //         setFirstImagePreviewUrl(sourceImagePreviewUrls[0]);
-    //     } else {
-    //         setEditShowMaskEditor(false);
-    //     }
-    // }, [
-    //     imageFiles,
-    //     sourceImagePreviewUrls,
-    //     setEditGeneratedMaskFile,
-    //     setEditIsMaskSaved,
-    //     setEditOriginalImageSize,
-    //     setEditDrawnPoints,
-    //     setEditMaskPreviewUrl,
-    //     setEditShowMaskEditor
-    // ]);
+        if (imageFiles.length > 0 && sourceImagePreviewUrls.length > 0) {
+            const img = new window.Image();
+            img.onload = () => {
+                setEditOriginalImageSize({ width: img.width, height: img.height });
+            };
+            img.src = sourceImagePreviewUrls[0];
+            setFirstImagePreviewUrl(sourceImagePreviewUrls[0]);
+        } else {
+            setEditShowMaskEditor(false);
+        }
+    }, [
+        imageFiles,
+        sourceImagePreviewUrls,
+        setEditGeneratedMaskFile,
+        setEditIsMaskSaved,
+        setEditOriginalImageSize,
+        setEditDrawnPoints,
+        setEditMaskPreviewUrl,
+        setEditShowMaskEditor
+    ]);
 
-    // React.useEffect(() => { // Commented out - mask functionality removed
-    //     const displayCtx = canvasRef.current?.getContext('2d');
-    //     const displayCanvas = canvasRef.current;
-    //     const feedbackCanvas = visualFeedbackCanvasRef.current;
+    React.useEffect(() => {
+        if (!isEditingGeneratedImage) return;
+        
+        const displayCtx = canvasRef.current?.getContext('2d');
+        const displayCanvas = canvasRef.current;
+        const feedbackCanvas = visualFeedbackCanvasRef.current;
 
-    //     if (!displayCtx || !displayCanvas || !feedbackCanvas || !editOriginalImageSize) return;
+        if (!displayCtx || !displayCanvas || !feedbackCanvas || !editOriginalImageSize) return;
 
-    //     const feedbackCtx = feedbackCanvas.getContext('2d');
-    //     if (!feedbackCtx) return;
+        const feedbackCtx = feedbackCanvas.getContext('2d');
+        if (!feedbackCtx) return;
 
-    //     feedbackCtx.clearRect(0, 0, feedbackCanvas.width, feedbackCanvas.height);
-    //     feedbackCtx.fillStyle = 'red';
-    //     editDrawnPoints.forEach((point) => {
-    //         feedbackCtx.beginPath();
-    //         feedbackCtx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
-    //         feedbackCtx.fill();
-    //     });
+        feedbackCtx.clearRect(0, 0, feedbackCanvas.width, feedbackCanvas.height);
+        feedbackCtx.fillStyle = 'red';
+        editDrawnPoints.forEach((point) => {
+            feedbackCtx.beginPath();
+            feedbackCtx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
+            feedbackCtx.fill();
+        });
 
-    //     displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
-    //     displayCtx.save();
-    //     displayCtx.globalAlpha = 0.5;
-    //     displayCtx.drawImage(feedbackCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
-    //     displayCtx.restore();
-    // }, [editDrawnPoints, editOriginalImageSize]);
+        displayCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+        displayCtx.save();
+        displayCtx.globalAlpha = 0.5;
+        displayCtx.drawImage(feedbackCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+        displayCtx.restore();
+    }, [editDrawnPoints, editOriginalImageSize, isEditingGeneratedImage]);
 
     // Sync between old imageFiles format and new ImageFile format
     React.useEffect(() => {
@@ -235,7 +223,7 @@ export function EditingForm({
         setSourceImagePreviewUrls(previewUrls);
     }, [setImageFiles, setSourceImagePreviewUrls]);
 
-    /* // All mask-related functions commented out - mask functionality removed
+    // All mask-related functions - conditional on isEditingGeneratedImage
     const getMousePos = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
         if (!canvas) return null;
@@ -402,7 +390,7 @@ export function EditingForm({
         };
 
         img.src = objectUrl;
-    }; */
+    };
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -410,7 +398,11 @@ export function EditingForm({
             alert('Please select at least one image to edit.');
             return;
         }
-        // Mask validation removed since masks are no longer used
+        // Validate mask if editing generated image
+        if (isEditingGeneratedImage && editShowMaskEditor && editDrawnPoints.length > 0 && !editIsMaskSaved) {
+            alert('Please save your mask before submitting.');
+            return;
+        }
 
         const formData: EditingFormData = {
             prompt: editPrompt,
@@ -418,7 +410,7 @@ export function EditingForm({
             size: '1024x1024', // Always use square format
             quality: 'high', // Always use high quality
             imageFiles: imageFiles,
-            maskFile: null // No mask functionality
+            maskFile: isEditingGeneratedImage ? editGeneratedMaskFile : null
         };
         onSubmit(formData);
     };
@@ -447,16 +439,6 @@ export function EditingForm({
             </CardHeader>
             <form onSubmit={handleSubmit} className='flex h-full flex-1 flex-col overflow-hidden'>
                 <CardContent className='flex-1 space-y-5 overflow-y-auto p-4'>
-                    <div className='space-y-1.5'>
-                        <Label className='text-white'>
-                            Prompt
-                        </Label>
-                        <PromptTemplateSelector 
-                            value={editPrompt}
-                            onChange={setEditPrompt}
-                        />
-                    </div>
-
                     <div className='space-y-2'>
                         <Label className='text-white'>Source Images</Label>
                         <MultiImageDropZone
@@ -467,7 +449,146 @@ export function EditingForm({
                         />
                     </div>
 
-                    {/* Mask functionality removed - no mask selector needed */}
+                    <div className='space-y-1.5'>
+                        <Label className='text-white'>
+                            Prompt
+                        </Label>
+                        <PromptTemplateSelector 
+                            value={editPrompt}
+                            onChange={setEditPrompt}
+                        />
+                    </div>
+
+                    {/* Conditional Mask Editor - only for generated images */}
+                    {isEditingGeneratedImage && firstImagePreviewUrl && (
+                        <div className='space-y-4'>
+                            <div className='flex items-center justify-between'>
+                                <Label className='text-white'>Mask Editor (Optional)</Label>
+                                <Button
+                                    type='button'
+                                    variant='outline'
+                                    size='sm'
+                                    onClick={() => setEditShowMaskEditor(!editShowMaskEditor)}
+                                    className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
+                                    <ScanEye className='mr-2 h-4 w-4' />
+                                    {editShowMaskEditor ? 'Hide Mask Editor' : 'Show Mask Editor'}
+                                </Button>
+                            </div>
+                            
+                            {editShowMaskEditor && (
+                                <div className='space-y-4 rounded-lg border border-white/10 bg-white/5 p-4'>
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='brush-size-slider' className='text-white'>
+                                            Brush Size: {editBrushSize[0]}px
+                                        </Label>
+                                        <Slider
+                                            id='brush-size-slider'
+                                            min={5}
+                                            max={50}
+                                            step={1}
+                                            value={editBrushSize}
+                                            onValueChange={setEditBrushSize}
+                                            disabled={isLoading}
+                                            className='[&>button]:border-black [&>button]:bg-white [&>button]:ring-offset-black [&>span:first-child]:h-1 [&>span:first-child>span]:bg-white'
+                                        />
+                                    </div>
+                                    
+                                    <div className='space-y-2'>
+                                        <Label className='text-white'>Canvas</Label>
+                                        <div className='relative overflow-hidden rounded border border-white/20'>
+                                            <Image
+                                                src={firstImagePreviewUrl}
+                                                alt='Base image for mask editing'
+                                                width={editOriginalImageSize?.width || 512}
+                                                height={editOriginalImageSize?.height || 512}
+                                                className='max-h-64 w-full object-contain'
+                                                unoptimized
+                                            />
+                                            <canvas
+                                                ref={canvasRef}
+                                                width={editOriginalImageSize?.width || 512}
+                                                height={editOriginalImageSize?.height || 512}
+                                                className='absolute inset-0 max-h-64 w-full cursor-crosshair'
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: 'auto',
+                                                    maxHeight: '16rem',
+                                                    objectFit: 'contain'
+                                                }}
+                                                onMouseDown={startDrawing}
+                                                onMouseMove={drawLine}
+                                                onMouseUp={stopDrawing}
+                                                onTouchStart={startDrawing}
+                                                onTouchMove={drawLine}
+                                                onTouchEnd={stopDrawing}
+                                            />
+                                        </div>
+                                        <p className='text-xs text-white/60'>
+                                            Draw on the image to mark areas you want to edit. Red areas will be replaced.
+                                        </p>
+                                    </div>
+                                    
+                                    <div className='flex gap-2'>
+                                        <Button
+                                            type='button'
+                                            variant='outline'
+                                            size='sm'
+                                            onClick={handleClearMask}
+                                            disabled={isLoading}
+                                            className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
+                                            <Eraser className='mr-2 h-4 w-4' />
+                                            Clear Mask
+                                        </Button>
+                                        
+                                        <Button
+                                            type='button'
+                                            variant='outline'
+                                            size='sm'
+                                            onClick={generateAndSaveMask}
+                                            disabled={isLoading || editDrawnPoints.length === 0}
+                                            className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-50'>
+                                            <Save className='mr-2 h-4 w-4' />
+                                            {editIsMaskSaved ? 'Mask Saved' : 'Save Mask'}
+                                        </Button>
+                                        
+                                        <Input
+                                            ref={maskInputRef}
+                                            type='file'
+                                            accept='image/png'
+                                            onChange={handleMaskFileChange}
+                                            className='hidden'
+                                        />
+                                        <Button
+                                            type='button'
+                                            variant='outline'
+                                            size='sm'
+                                            onClick={() => maskInputRef.current?.click()}
+                                            disabled={isLoading}
+                                            className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
+                                            <UploadCloud className='mr-2 h-4 w-4' />
+                                            Upload Mask
+                                        </Button>
+                                    </div>
+                                    
+                                    {editMaskPreviewUrl && (
+                                        <div className='space-y-2'>
+                                            <Label className='text-white'>Mask Preview</Label>
+                                            <div className='overflow-hidden rounded border border-white/20'>
+                                                <Image
+                                                    src={editMaskPreviewUrl}
+                                                    alt='Mask preview'
+                                                    width={editOriginalImageSize?.width || 512}
+                                                    height={editOriginalImageSize?.height || 512}
+                                                    className='max-h-32 w-full object-contain'
+                                                    unoptimized
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Size is now fixed to square (1024x1024) - no UI selector needed */}
 

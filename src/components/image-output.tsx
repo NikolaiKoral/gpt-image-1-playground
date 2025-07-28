@@ -2,8 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Loader2, Send, Grid } from 'lucide-react';
+import { Loader2, Send, Grid, Download, Edit3 } from 'lucide-react';
 import Image from 'next/image';
+import * as React from 'react';
 
 type ImageInfo = {
     path: string;
@@ -17,6 +18,8 @@ type ImageOutputProps = {
     altText?: string;
     isLoading: boolean;
     onSendToEdit: (filename: string) => void;
+    onDownload?: (filename: string, imageUrl: string) => void;
+    onContinueEditing?: (filename: string) => void;
     currentMode: 'generate' | 'edit';
     baseImagePreviewUrl: string | null;
 };
@@ -28,6 +31,85 @@ const getGridColsClass = (count: number): string => {
     return 'grid-cols-3';
 };
 
+const EnhancedLoadingPreview = ({ 
+    baseImagePreviewUrl, 
+    currentMode 
+}: { 
+    baseImagePreviewUrl: string | null; 
+    currentMode: 'generate' | 'edit'; 
+}) => {
+    const [loadingText, setLoadingText] = React.useState('Generating image...');
+    const [dotCount, setDotCount] = React.useState(0);
+    
+    React.useEffect(() => {
+        const messages = currentMode === 'edit' 
+            ? ['Editing image...', 'Applying changes...', 'Processing...', 'Almost done...']
+            : ['Generating image...', 'Creating artwork...', 'Processing...', 'Finalizing...'];
+        
+        let messageIndex = 0;
+        const interval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % messages.length;
+            setLoadingText(messages[messageIndex]);
+        }, 2000);
+        
+        return () => clearInterval(interval);
+    }, [currentMode]);
+    
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            setDotCount(prev => (prev + 1) % 4);
+        }, 500);
+        
+        return () => clearInterval(interval);
+    }, []);
+    
+    const dots = '.'.repeat(dotCount);
+    
+    if (currentMode === 'edit' && baseImagePreviewUrl) {
+        return (
+            <div className='relative flex h-full w-full items-center justify-center'>
+                <Image
+                    src={baseImagePreviewUrl}
+                    alt='Base image for editing'
+                    fill
+                    style={{ objectFit: 'contain' }}
+                    className='blur-md filter transition-all duration-300'
+                    unoptimized
+                />
+                <div className='absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white'>
+                    <div className='relative mb-4'>
+                        <Loader2 className='h-12 w-12 animate-spin text-white' />
+                        <div className='absolute inset-0 h-12 w-12 animate-pulse rounded-full border-2 border-white/20'></div>
+                    </div>
+                    <div className='text-center'>
+                        <p className='text-lg font-medium'>{loadingText}{dots}</p>
+                        <p className='mt-1 text-sm text-white/70'>This may take up to 2 minutes</p>
+                    </div>
+                    <div className='mt-4 h-1 w-48 overflow-hidden rounded-full bg-white/20'>
+                        <div className='h-full w-full origin-left animate-pulse bg-white/40 transition-transform duration-1000'></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    return (
+        <div className='flex flex-col items-center justify-center text-white/80'>
+            <div className='relative mb-4'>
+                <Loader2 className='h-12 w-12 animate-spin text-white' />
+                <div className='absolute inset-0 h-12 w-12 animate-pulse rounded-full border-2 border-white/20'></div>
+            </div>
+            <div className='text-center'>
+                <p className='text-lg font-medium'>{loadingText}{dots}</p>
+                <p className='mt-1 text-sm text-white/60'>This may take up to 2 minutes</p>
+            </div>
+            <div className='mt-4 h-1 w-48 overflow-hidden rounded-full bg-white/20'>
+                <div className='h-full animate-pulse bg-gradient-to-r from-white/40 to-transparent'></div>
+            </div>
+        </div>
+    );
+};
+
 export function ImageOutput({
     imageBatch,
     viewMode,
@@ -35,6 +117,8 @@ export function ImageOutput({
     altText = 'Generated image output',
     isLoading,
     onSendToEdit,
+    onDownload,
+    onContinueEditing,
     currentMode,
     baseImagePreviewUrl
 }: ImageOutputProps) {
@@ -42,6 +126,18 @@ export function ImageOutput({
         // Send to edit only works when a single image is selected
         if (typeof viewMode === 'number' && imageBatch && imageBatch[viewMode]) {
             onSendToEdit(imageBatch[viewMode].filename);
+        }
+    };
+
+    const handleDownloadClick = () => {
+        if (typeof viewMode === 'number' && imageBatch && imageBatch[viewMode] && onDownload) {
+            onDownload(imageBatch[viewMode].filename, imageBatch[viewMode].path);
+        }
+    };
+
+    const handleContinueEditingClick = () => {
+        if (typeof viewMode === 'number' && imageBatch && imageBatch[viewMode] && onContinueEditing) {
+            onContinueEditing(imageBatch[viewMode].filename);
         }
     };
 
@@ -53,27 +149,10 @@ export function ImageOutput({
         <div className='flex h-full min-h-[300px] w-full flex-col items-center justify-between gap-4 overflow-hidden rounded-lg border border-white/20 bg-black p-4'>
             <div className='relative flex h-full w-full flex-grow items-center justify-center overflow-hidden'>
                 {isLoading ? (
-                    currentMode === 'edit' && baseImagePreviewUrl ? (
-                        <div className='relative flex h-full w-full items-center justify-center'>
-                            <Image
-                                src={baseImagePreviewUrl}
-                                alt='Base image for editing'
-                                fill
-                                style={{ objectFit: 'contain' }}
-                                className='blur-md filter'
-                                unoptimized
-                            />
-                            <div className='absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white/80'>
-                                <Loader2 className='mb-2 h-8 w-8 animate-spin' />
-                                <p>Editing image...</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className='flex flex-col items-center justify-center text-white/60'>
-                            <Loader2 className='mb-2 h-8 w-8 animate-spin' />
-                            <p>Generating image...</p>
-                        </div>
-                    )
+                    <EnhancedLoadingPreview 
+                        baseImagePreviewUrl={baseImagePreviewUrl}
+                        currentMode={currentMode}
+                    />
                 ) : imageBatch && imageBatch.length > 0 ? (
                     viewMode === 'grid' ? (
                         <div
@@ -114,7 +193,7 @@ export function ImageOutput({
                 )}
             </div>
 
-            <div className='flex h-10 w-full shrink-0 items-center justify-center gap-4'>
+            <div className='flex w-full shrink-0 items-center justify-between gap-4'>
                 {showCarousel && (
                     <div className='flex items-center gap-1.5 rounded-md border border-white/10 bg-neutral-800/50 p-1'>
                         <Button
@@ -156,19 +235,44 @@ export function ImageOutput({
                     </div>
                 )}
 
-                <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={handleSendClick}
-                    disabled={!canSendToEdit}
-                    className={cn(
-                        'shrink-0 border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-50',
-                        // Hide button completely if grid view is active and there are multiple images
-                        showCarousel && viewMode === 'grid' ? 'invisible' : 'visible'
-                    )}>
-                    <Send className='mr-2 h-4 w-4' />
-                    Send to Edit
-                </Button>
+                <div className={cn(
+                    'flex items-center gap-2',
+                    showCarousel && viewMode === 'grid' ? 'invisible' : 'visible'
+                )}>
+                    {onDownload && (
+                        <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={handleDownloadClick}
+                            disabled={!canSendToEdit}
+                            className='shrink-0 border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-50'>
+                            <Download className='mr-2 h-4 w-4' />
+                            Download
+                        </Button>
+                    )}
+                    
+                    {onContinueEditing && (
+                        <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={handleContinueEditingClick}
+                            disabled={!canSendToEdit}
+                            className='shrink-0 border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-50'>
+                            <Edit3 className='mr-2 h-4 w-4' />
+                            Continue
+                        </Button>
+                    )}
+
+                    <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={handleSendClick}
+                        disabled={!canSendToEdit}
+                        className='shrink-0 border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-50'>
+                        <Send className='mr-2 h-4 w-4' />
+                        Send to Edit
+                    </Button>
+                </div>
             </div>
         </div>
     );
