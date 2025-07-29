@@ -22,6 +22,7 @@ import {
 } from '@/lib/prompt-templates';
 import { PromptTagSelector } from '@/components/prompt-tag-selector';
 import { formatTagsForPrompt } from '@/lib/prompt-tags';
+import { usePromptRefinement } from '@/hooks/usePromptRefinement';
 
 // Debug: Log templates on import - commented out
 // console.log('Total templates loaded:', PROMPT_TEMPLATES.length);
@@ -39,7 +40,8 @@ import {
     RefreshCw,
     Copy,
     Check,
-    ArrowRight
+    ArrowRight,
+    Loader2
 } from 'lucide-react';
 import * as React from 'react';
 
@@ -47,6 +49,7 @@ interface PromptTemplateSelectorProps {
     value: string;
     onChange: (value: string) => void;
     className?: string;
+    imageFiles?: File[];
 }
 
 const CATEGORY_ICONS = {
@@ -60,7 +63,8 @@ const CATEGORY_ICONS = {
 export function PromptTemplateSelector({
     value,
     onChange,
-    className
+    className,
+    imageFiles
 }: PromptTemplateSelectorProps) {
     const [selectedTemplate, setSelectedTemplate] = React.useState<PromptTemplate | null>(null);
     const [templateVariables, setTemplateVariables] = React.useState<Record<string, string>>({});
@@ -70,6 +74,9 @@ export function PromptTemplateSelector({
     const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
     const [customPromptText, setCustomPromptText] = React.useState('');
     const [transferredTemplate, setTransferredTemplate] = React.useState<string | null>(null);
+    
+    // Prompt refinement hook
+    const { refinePrompt, isRefining, error: refinementError } = usePromptRefinement();
 
     // Initialize template variables when template changes
     React.useEffect(() => {
@@ -184,6 +191,19 @@ export function PromptTemplateSelector({
             setTimeout(() => setCopiedTemplate(null), 2000);
         } catch (err) {
             console.error('Failed to copy template:', err);
+        }
+    };
+
+    const handleRefinePrompt = async () => {
+        if (!customPromptText.trim()) return;
+        
+        const refinedPrompt = await refinePrompt(
+            customPromptText,
+            imageFiles,
+            selectedTags
+        );
+        if (refinedPrompt) {
+            setCustomPromptText(refinedPrompt);
         }
     };
 
@@ -493,14 +513,39 @@ export function PromptTemplateSelector({
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="custom-prompt">Dit prompt</Label>
-                                <Textarea
-                                    id="custom-prompt"
-                                    placeholder="Indtast dit brugerdefinerede prompt her..."
-                                    value={customPromptText}
-                                    onChange={(e) => handleCustomPromptChange(e.target.value)}
-                                    rows={3}
-                                    className="resize-none"
-                                />
+                                <div className="relative">
+                                    <Textarea
+                                        id="custom-prompt"
+                                        placeholder="Indtast dit brugerdefinerede prompt her..."
+                                        value={customPromptText}
+                                        onChange={(e) => handleCustomPromptChange(e.target.value)}
+                                        rows={3}
+                                        className="resize-none pr-12"
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        className="absolute top-2 right-2 h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                        onClick={handleRefinePrompt}
+                                        disabled={isRefining || !customPromptText.trim()}
+                                        title={imageFiles && imageFiles.length > 0 
+                                            ? "Analyser billede og forbedr prompt med AI" 
+                                            : "Forbedr prompt med AI"
+                                        }
+                                    >
+                                        {isRefining ? (
+                                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                        ) : (
+                                            <Sparkles className="h-4 w-4 text-blue-600" />
+                                        )}
+                                    </Button>
+                                </div>
+                                {refinementError && (
+                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                        {refinementError}
+                                    </p>
+                                )}
                             </div>
                             
                             <PromptTagSelector

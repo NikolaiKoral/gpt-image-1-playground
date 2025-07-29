@@ -456,6 +456,7 @@ export function EditingForm({
                         <PromptTemplateSelector 
                             value={editPrompt}
                             onChange={setEditPrompt}
+                            imageFiles={imageFiles}
                         />
                     </div>
 
