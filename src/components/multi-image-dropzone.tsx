@@ -162,7 +162,7 @@ export function MultiImageDropZone({
                             isDragAccept ? (
                                 <div className="flex flex-col items-center space-y-2 text-green-600">
                                     <Upload className="h-8 w-8" />
-                                    <p className="text-sm font-medium">Drop images here</p>
+                                    <p className="text-sm font-medium">Slip billeder her</p>
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center space-y-2 text-red-600">
@@ -175,11 +175,11 @@ export function MultiImageDropZone({
                                 <ImageIcon className="h-8 w-8 text-muted-foreground" />
                                 <div className="space-y-1">
                                     <p className="text-sm font-medium">
-                                        Drag & drop images here, or{' '}
-                                        <span className="text-primary underline">browse</span>
+                                        Træk og slip billeder her, eller{' '}
+                                        <span className="text-primary underline">gennemse</span>
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        PNG, JPG, WebP up to {Math.round(maxFileSize / (1024 * 1024))}MB
+                                        PNG, JPG, WebP op til {Math.round(maxFileSize / (1024 * 1024))}MB
                                     </p>
                                 </div>
                             </div>
@@ -197,7 +197,7 @@ export function MultiImageDropZone({
                         </p>
                         {!canAddMoreImages && (
                             <p className="text-xs text-muted-foreground">
-                                Maximum images reached
+                                Maksimum antal billeder nået
                             </p>
                         )}
                     </div>
@@ -283,7 +283,7 @@ export function MultiImageDropZone({
                                 <input {...getInputProps()} />
                                 <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
                                     <Plus className="h-8 w-8 mb-2" />
-                                    <p className="text-xs text-center">Add More</p>
+                                    <p className="text-xs text-center">Tilføj flere</p>
                                 </div>
                             </Card>
                         )}

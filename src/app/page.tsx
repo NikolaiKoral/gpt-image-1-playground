@@ -151,9 +151,17 @@ export default function HomePage() {
         };
     }, [blobUrlCache]);
 
+    // Cleanup blob URLs when component unmounts or editSourceImagePreviewUrls changes
     React.useEffect(() => {
         return () => {
-            editSourceImagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+            editSourceImagePreviewUrls.forEach((url) => {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    // Silently ignore errors if URL was already revoked
+                    console.debug('Error revoking blob URL (likely already revoked):', error);
+                }
+            });
         };
     }, [editSourceImagePreviewUrls]);
 
@@ -207,12 +215,6 @@ export default function HomePage() {
             }
         }
     }, [history, isInitialLoad]);
-
-    React.useEffect(() => {
-        return () => {
-            editSourceImagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-        };
-    }, [editSourceImagePreviewUrls]);
 
     React.useEffect(() => {
         const storedPref = localStorage.getItem('imageGenSkipDeleteConfirm');
@@ -631,7 +633,14 @@ export default function HomePage() {
             const newFile = new File([blob], filename, { type: mimeType });
             const newPreviewUrl = URL.createObjectURL(blob);
 
-            editSourceImagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+            editSourceImagePreviewUrls.forEach((url) => {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    // Silently ignore errors if URL was already revoked
+                    console.debug('Error revoking blob URL in handleSendToEdit:', error);
+                }
+            });
 
             setEditImageFiles([newFile]);
             setEditSourceImagePreviewUrls([newPreviewUrl]);
@@ -749,8 +758,8 @@ export default function HomePage() {
             // First, send the image to edit form
             await handleSendToEdit(filename);
             
-            // Ensure we're marked as editing a generated image
-            setIsEditingGeneratedImage(true);
+            // The setIsEditingGeneratedImage is already handled in handleSendToEdit based on filename pattern
+            // No need to set it again here to avoid race conditions
             
             // Then append "further edit this image" to the current prompt
             if (editPrompt.trim()) {

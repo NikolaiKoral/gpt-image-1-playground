@@ -208,11 +208,11 @@ export function PromptTemplateSelector({
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="browse" className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4" />
-                        Browse Templates
+                        Gennemse templates
                     </TabsTrigger>
                     <TabsTrigger value="custom" className="flex items-center gap-2">
                         <Wand2 className="h-4 w-4" />
-                        Custom Prompt
+                        Brugerdefineret prompt
                     </TabsTrigger>
                 </TabsList>
 
@@ -272,7 +272,7 @@ export function PromptTemplateSelector({
                                                                     variant="ghost"
                                                                     className="h-8 w-8 p-0"
                                                                     onClick={(e) => handleCopyToCustom(template, e)}
-                                                                    title="Copy to Custom Prompt"
+                                                                    title="Kopier til brugerdefineret prompt"
                                                                 >
                                                                     <ArrowRight className="h-4 w-4 text-green-600" />
                                                                 </Button>
@@ -341,7 +341,7 @@ export function PromptTemplateSelector({
                                                         variant="ghost"
                                                         className="h-8 w-8 p-0"
                                                         onClick={(e) => handleCopyToCustom(template, e)}
-                                                        title="Copy to Custom Prompt"
+                                                        title="Kopier til brugerdefineret prompt"
                                                     >
                                                         <ArrowRight className="h-4 w-4 text-green-600" />
                                                     </Button>
@@ -402,7 +402,7 @@ export function PromptTemplateSelector({
                                             className="bg-green-600 hover:bg-green-700"
                                         >
                                             <Wand2 className="h-4 w-4 mr-2" />
-                                            Use as Custom Prompt
+                                            Brug som brugerdefineret prompt
                                         </Button>
                                         <Button
                                             size="sm"
@@ -472,10 +472,10 @@ export function PromptTemplateSelector({
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
                                         <Wand2 className="h-5 w-5" />
-                                        Custom Prompt
+                                        Brugerdefineret prompt
                                     </CardTitle>
                                     <CardDescription>
-                                        Write your own prompt or modify a template
+                                        Skriv dit eget prompt eller rediger en template
                                     </CardDescription>
                                 </div>
                                 {(customPromptText || selectedTags.length > 0) && (
@@ -492,10 +492,10 @@ export function PromptTemplateSelector({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="custom-prompt">Your Prompt</Label>
+                                <Label htmlFor="custom-prompt">Dit prompt</Label>
                                 <Textarea
                                     id="custom-prompt"
-                                    placeholder="Enter your custom prompt here..."
+                                    placeholder="Indtast dit brugerdefinerede prompt her..."
                                     value={customPromptText}
                                     onChange={(e) => handleCustomPromptChange(e.target.value)}
                                     rows={3}

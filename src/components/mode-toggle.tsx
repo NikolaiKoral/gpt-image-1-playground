@@ -31,7 +31,7 @@ export function ModeToggle({ currentMode, onModeChange }: ModeToggleProps) {
                             ? 'border-white bg-white text-black'
                             : 'border-dashed border-white/30 bg-transparent text-white/60 hover:border-white/50 hover:text-white/80'
                     } `}>
-                    Edit
+                    Rediger
                 </TabsTrigger>
             </TabsList>
         </Tabs>

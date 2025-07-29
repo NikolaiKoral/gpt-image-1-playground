@@ -421,7 +421,7 @@ export function EditingForm({
             <CardHeader className='flex items-start justify-between border-b border-white/10 pb-4'>
                 <div>
                     <div className='flex items-center'>
-                        <CardTitle className='py-1 text-lg font-medium text-white'>Edit Image</CardTitle>
+                        <CardTitle className='py-1 text-lg font-medium text-white'>Skab miljøbilleder ud fra packshots</CardTitle>
                         {isPasswordRequiredByBackend && (
                             <Button
                                 variant='ghost'
@@ -433,14 +433,14 @@ export function EditingForm({
                             </Button>
                         )}
                     </div>
-                    <CardDescription className='mt-1 text-white/60'>Modify an image using gpt-image-1.</CardDescription>
+                    <CardDescription className='mt-1 text-white/60'>Upload et eller flere packshots og vælg en template eller lav eget prompt.</CardDescription>
                 </div>
                 <ModeToggle currentMode={currentMode} onModeChange={onModeChange} />
             </CardHeader>
             <form onSubmit={handleSubmit} className='flex h-full flex-1 flex-col overflow-hidden'>
                 <CardContent className='flex-1 space-y-5 overflow-y-auto p-4'>
                     <div className='space-y-2'>
-                        <Label className='text-white'>Source Images</Label>
+                        <Label className='text-white'>Kildebilleder</Label>
                         <MultiImageDropZone
                             images={imageDropZoneFiles}
                             onImagesChange={handleDropZoneImagesChange}
@@ -463,7 +463,7 @@ export function EditingForm({
                     {isEditingGeneratedImage && firstImagePreviewUrl && (
                         <div className='space-y-4'>
                             <div className='flex items-center justify-between'>
-                                <Label className='text-white'>Mask Editor (Optional)</Label>
+                                <Label className='text-white'>Mask editor (valgfri)</Label>
                                 <Button
                                     type='button'
                                     variant='outline'
@@ -471,7 +471,7 @@ export function EditingForm({
                                     onClick={() => setEditShowMaskEditor(!editShowMaskEditor)}
                                     className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
                                     <ScanEye className='mr-2 h-4 w-4' />
-                                    {editShowMaskEditor ? 'Hide Mask Editor' : 'Show Mask Editor'}
+                                    {editShowMaskEditor ? 'Skjul mask editor' : 'Vis mask editor'}
                                 </Button>
                             </div>
                             
@@ -479,7 +479,7 @@ export function EditingForm({
                                 <div className='space-y-4 rounded-lg border border-white/10 bg-white/5 p-4'>
                                     <div className='space-y-2'>
                                         <Label htmlFor='brush-size-slider' className='text-white'>
-                                            Brush Size: {editBrushSize[0]}px
+                                            Penselstørrelse: {editBrushSize[0]}px
                                         </Label>
                                         <Slider
                                             id='brush-size-slider'
@@ -494,7 +494,7 @@ export function EditingForm({
                                     </div>
                                     
                                     <div className='space-y-2'>
-                                        <Label className='text-white'>Canvas</Label>
+                                        <Label className='text-white'>Lærred</Label>
                                         <div className='relative overflow-hidden rounded border border-white/20'>
                                             <Image
                                                 src={firstImagePreviewUrl}
@@ -524,7 +524,7 @@ export function EditingForm({
                                             />
                                         </div>
                                         <p className='text-xs text-white/60'>
-                                            Draw on the image to mark areas you want to edit. Red areas will be replaced.
+                                            Tegn på billedet for at markere områder, du vil redigere. Røde områder vil blive erstattet.
                                         </p>
                                     </div>
                                     
@@ -537,7 +537,7 @@ export function EditingForm({
                                             disabled={isLoading}
                                             className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
                                             <Eraser className='mr-2 h-4 w-4' />
-                                            Clear Mask
+                                            Ryd mask
                                         </Button>
                                         
                                         <Button
@@ -548,7 +548,7 @@ export function EditingForm({
                                             disabled={isLoading || editDrawnPoints.length === 0}
                                             className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-50'>
                                             <Save className='mr-2 h-4 w-4' />
-                                            {editIsMaskSaved ? 'Mask Saved' : 'Save Mask'}
+                                            {editIsMaskSaved ? 'Mask gemt' : 'Gem mask'}
                                         </Button>
                                         
                                         <Input
@@ -566,13 +566,13 @@ export function EditingForm({
                                             disabled={isLoading}
                                             className='border-white/20 text-white/80 hover:bg-white/10 hover:text-white'>
                                             <UploadCloud className='mr-2 h-4 w-4' />
-                                            Upload Mask
+                                            Upload mask
                                         </Button>
                                     </div>
                                     
                                     {editMaskPreviewUrl && (
                                         <div className='space-y-2'>
-                                            <Label className='text-white'>Mask Preview</Label>
+                                            <Label className='text-white'>Mask preview</Label>
                                             <div className='overflow-hidden rounded border border-white/20'>
                                                 <Image
                                                     src={editMaskPreviewUrl}
@@ -596,7 +596,7 @@ export function EditingForm({
 
                     <div className='space-y-2'>
                         <Label htmlFor='edit-n-slider' className='text-white'>
-                            Number of Images: {editN[0]}
+                            Antal billeder: {editN[0]}
                         </Label>
                         <Slider
                             id='edit-n-slider'
@@ -616,7 +616,7 @@ export function EditingForm({
                         disabled={isLoading || !editPrompt || imageFiles.length === 0}
                         className='flex w-full items-center justify-center gap-2 rounded-md bg-white text-black hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40'>
                         {isLoading && <Loader2 className='h-4 w-4 animate-spin' />}
-                        {isLoading ? 'Editing...' : 'Edit Image'}
+                        {isLoading ? 'Skaber miljøbilleder...' : 'Skab miljøbilleder'}
                     </Button>
                 </CardFooter>
             </form>

@@ -38,13 +38,13 @@ const EnhancedLoadingPreview = ({
     baseImagePreviewUrl: string | null; 
     currentMode: 'generate' | 'edit'; 
 }) => {
-    const [loadingText, setLoadingText] = React.useState('Generating image...');
+    const [loadingText, setLoadingText] = React.useState('Genererer billede...');
     const [dotCount, setDotCount] = React.useState(0);
     
     React.useEffect(() => {
         const messages = currentMode === 'edit' 
-            ? ['Editing image...', 'Applying changes...', 'Processing...', 'Almost done...']
-            : ['Generating image...', 'Creating artwork...', 'Processing...', 'Finalizing...'];
+            ? ['Redigerer billede...', 'Anvender ændringer...', 'Behandler...', 'Næsten færdig...']
+            : ['Genererer billede...', 'Skaber kunstværk...', 'Behandler...', 'Færdiggør...'];
         
         let messageIndex = 0;
         const interval = setInterval(() => {
@@ -188,7 +188,7 @@ export function ImageOutput({
                     )
                 ) : (
                     <div className='text-center text-white/40'>
-                        <p>Your generated image will appear here.</p>
+                        <p>Dit genererede billede vil vise sig her.</p>
                     </div>
                 )}
             </div>
@@ -259,7 +259,7 @@ export function ImageOutput({
                             disabled={!canSendToEdit}
                             className='shrink-0 border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-50'>
                             <Edit3 className='mr-2 h-4 w-4' />
-                            Continue
+                            Fortsæt
                         </Button>
                     )}
 
@@ -270,7 +270,7 @@ export function ImageOutput({
                         disabled={!canSendToEdit}
                         className='shrink-0 border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-50'>
                         <Send className='mr-2 h-4 w-4' />
-                        Send to Edit
+                        Send til redigering
                     </Button>
                 </div>
             </div>

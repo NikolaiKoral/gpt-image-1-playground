@@ -160,13 +160,14 @@ export async function POST(request: NextRequest) {
 
             const maskFile = formData.get('mask') as File | null;
 
-            const params: OpenAI.Images.ImageEditParams = {
+            const params: OpenAI.Images.ImageEditParams & { input_fidelity?: string } = {
                 model,
                 prompt,
                 image: imageFiles,
                 n: Math.max(1, Math.min(n || 1, 10)),
                 size: size === 'auto' ? undefined : size,
-                quality: quality === 'auto' ? undefined : quality
+                quality: quality === 'auto' ? undefined : quality,
+                input_fidelity: "high"
             };
 
             if (maskFile) {

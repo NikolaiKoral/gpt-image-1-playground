@@ -102,19 +102,19 @@ export function HistoryPanel({
         <Card className='flex h-full w-full flex-col overflow-hidden rounded-lg border border-white/10 bg-black'>
             <CardHeader className='flex flex-row items-center justify-between gap-4 border-b border-white/10 px-4 py-3'>
                 <div className='flex items-center gap-2'>
-                    <CardTitle className='text-lg font-medium text-white'>History</CardTitle>
+                    <CardTitle className='text-lg font-medium text-white'>Historik</CardTitle>
                     {totalCost > 0 && (
                         <Dialog open={isTotalCostDialogOpen} onOpenChange={setIsTotalCostDialogOpen}>
                             <DialogTrigger asChild>
                                 <button
                                     className='mt-0.5 flex items-center gap-1 rounded-full bg-green-600/80 px-1.5 py-0.5 text-[12px] text-white transition-colors hover:bg-green-500/90'
-                                    aria-label='Show total cost summary'>
-                                    Total Cost: ${totalCost.toFixed(4)}
+                                    aria-label='Vis samlet omkostningsoversigt'>
+                                    Samlet omkostning: ${totalCost.toFixed(4)}
                                 </button>
                             </DialogTrigger>
                             <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-[450px]'>
                                 <DialogHeader>
-                                    <DialogTitle className='text-white'>Total Cost Summary</DialogTitle>
+                                    <DialogTitle className='text-white'>Samlet omkostningsoversigt</DialogTitle>
                                     {/* Add sr-only description for accessibility */}
                                     <DialogDescription className='sr-only'>
                                         A summary of the total estimated cost for all generated images in the history.
@@ -162,7 +162,7 @@ export function HistoryPanel({
                         size='sm'
                         onClick={onClearHistory}
                         className='h-auto rounded-md px-2 py-1 text-white/60 hover:bg-white/10 hover:text-white'>
-                        Clear
+                        Ryd
                     </Button>
                 )}
             </CardHeader>
@@ -200,7 +200,7 @@ export function HistoryPanel({
                                             {thumbnailUrl ? (
                                                 <Image
                                                     src={thumbnailUrl}
-                                                    alt={`Preview for batch generated at ${new Date(item.timestamp).toLocaleString()}`}
+                                                    alt={`Preview for batch genereret ${new Date(item.timestamp).toLocaleString()}`}
                                                     width={150}
                                                     height={150}
                                                     className='h-full w-full object-cover'
@@ -342,11 +342,11 @@ export function HistoryPanel({
 
                                     <div className='space-y-1 rounded-b-md border border-t-0 border-neutral-700 bg-black p-2 text-xs text-white/60'>
                                         <p title={`Generated on: ${new Date(item.timestamp).toLocaleString()}`}>
-                                            <span className='font-medium text-white/80'>Time:</span>{' '}
+                                            <span className='font-medium text-white/80'>Tid:</span>{' '}
                                             {formatDuration(item.durationMs)}
                                         </p>
                                         <p>
-                                            <span className='font-medium text-white/80'>Quality:</span> {item.quality}
+                                            <span className='font-medium text-white/80'>Kvalitet:</span> {item.quality}
                                         </p>
                                         <p>
                                             <span className='font-medium text-white/80'>BG:</span> {item.background}
@@ -366,7 +366,7 @@ export function HistoryPanel({
                                                         size='sm'
                                                         className='h-6 flex-grow border-white/20 px-2 py-1 text-xs text-white/70 hover:bg-white/10 hover:text-white'
                                                         onClick={() => setOpenPromptDialogTimestamp(itemKey)}>
-                                                        Show Prompt
+                                                        Vis prompt
                                                     </Button>
                                                 </DialogTrigger>
                                                 <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-[625px]'>
@@ -416,7 +416,7 @@ export function HistoryPanel({
                                                             e.stopPropagation();
                                                             onDeleteItemRequest(item);
                                                         }}
-                                                        aria-label='Delete history item'>
+                                                        aria-label='Slet historik element'>
                                                         <Trash2 size={14} />
                                                     </Button>
                                                 </DialogTrigger>
@@ -461,7 +461,7 @@ export function HistoryPanel({
                                                             size='sm'
                                                             onClick={onConfirmDeletion}
                                                             className='bg-red-600 text-white hover:bg-red-500'>
-                                                            Delete
+                                                            Slet
                                                         </Button>
                                                     </DialogFooter>
                                                 </DialogContent>

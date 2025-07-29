@@ -87,7 +87,7 @@ export function PromptTagSelector({
             {/* Header with selected tags count and clear button */}
             <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">
-                    Enhance with Tags ({selectedTags.length}/{maxTags})
+                    Forbedr med tags ({selectedTags.length}/{maxTags})
                 </Label>
                 {selectedTags.length > 0 && (
                     <Button
@@ -97,7 +97,7 @@ export function PromptTagSelector({
                         className="text-xs text-muted-foreground hover:text-foreground"
                     >
                         <X className="h-3 w-3 mr-1" />
-                        Clear All
+                        Ryd alle
                     </Button>
                 )}
             </div>
@@ -106,7 +106,7 @@ export function PromptTagSelector({
             {selectedTags.length > 0 && (
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Selected Tags</CardTitle>
+                        <CardTitle className="text-sm">Valgte tags</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0 px-4 pb-3">
                         <div className="flex flex-wrap gap-2">
@@ -134,7 +134,7 @@ export function PromptTagSelector({
                             <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
                             <div>
                                 <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                                    Tag Conflicts Detected
+                                    Tag konflikter registreret
                                 </p>
                                 <ul className="text-xs text-orange-700 dark:text-orange-300 mt-1">
                                     {conflicts.map((conflict, index) => (
@@ -151,7 +151,7 @@ export function PromptTagSelector({
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                    placeholder="Search tags..."
+                    placeholder="Søg tags..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -162,7 +162,7 @@ export function PromptTagSelector({
             {searchQuery && searchResults.length > 0 && (
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Search Results ({searchResults.length})</CardTitle>
+                        <CardTitle className="text-sm">Søgeresultater ({searchResults.length})</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0 px-4 pb-3">
                         <div className="flex flex-wrap gap-2">
@@ -186,10 +186,10 @@ export function PromptTagSelector({
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Star className="h-4 w-4 text-yellow-500" />
-                            Popular Tags
+                            Populære tags
                         </CardTitle>
                         <CardDescription className="text-xs">
-                            Frequently used tags for quick selection
+                            Hyppigt brugte tags til hurtig vælv
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0 px-4 pb-3">
