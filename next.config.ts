@@ -16,12 +16,14 @@ const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['@radix-ui/react-dialog', '@radix-ui/react-select', 'lucide-react'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  },
+  
+  // Turbopack configuration (now stable)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
@@ -122,12 +124,10 @@ const nextConfig: NextConfig = {
   // Compression
   compress: true,
   
-  // Production optimizations
-  ...(process.env.NODE_ENV === 'production' && {
-    output: 'standalone',
-    poweredByHeader: false,
-    generateEtags: false,
-  }),
+  // Always use standalone output for Docker deployment
+  output: 'standalone',
+  poweredByHeader: false,
+  generateEtags: false,
 };
 
 export default nextConfig;

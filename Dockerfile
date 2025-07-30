@@ -13,10 +13,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set environment variable for Next.js standalone output
+# Set environment variables for Next.js build
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV STANDALONE=true
+ENV NODE_ENV=production
+# Increase Node.js memory limit for build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
+# Build the application
 RUN npm run build
 
 # Runner stage
