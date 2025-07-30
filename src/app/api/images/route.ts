@@ -4,10 +4,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import path from 'path';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.OPENAI_API_BASE_URL
-});
+// Lazy initialization of OpenAI client
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+    if (!openai) {
+        openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+            baseURL: process.env.OPENAI_API_BASE_URL
+        });
+    }
+    return openai;
+}
 
 const outputDir = path.resolve(process.cwd(), 'generated-images');
 
@@ -141,7 +149,7 @@ export async function POST(request: NextRequest) {
             }
 
             console.log('Calling OpenAI generate with params:', params);
-            result = await openai.images.generate(params);
+            result = await getOpenAIClient().images.generate(params);
         } else if (mode === 'edit') {
             const n = parseInt((formData.get('n') as string) || '1', 10);
             const size = (formData.get('size') as OpenAI.Images.ImageEditParams['size']) || 'auto';
@@ -179,7 +187,7 @@ export async function POST(request: NextRequest) {
                 image: `[${imageFiles.map((f) => f.name).join(', ')}]`,
                 mask: maskFile ? maskFile.name : 'N/A'
             });
-            result = await openai.images.edit(params);
+            result = await getOpenAIClient().images.edit(params);
         } else {
             return NextResponse.json({ error: 'Invalid mode specified' }, { status: 400 });
         }
