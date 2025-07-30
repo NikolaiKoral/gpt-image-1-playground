@@ -29,17 +29,22 @@ export class ImageDB extends Dexie {
         });
 
         // Version 2: Add metadata table and enhanced image schema
-        this.version(2).stores({
-            images: '&filename, timestamp, size',
-            metadata: '&filename, timestamp'
-        }).upgrade(tx => {
-            // Migration logic for existing data
-            return tx.table('images').toCollection().modify(record => {
-                record.timestamp = record.timestamp || Date.now();
-                record.size = record.blob?.size || 0;
-                record.compressed = false;
+        this.version(2)
+            .stores({
+                images: '&filename, timestamp, size',
+                metadata: '&filename, timestamp'
+            })
+            .upgrade((tx) => {
+                // Migration logic for existing data
+                return tx
+                    .table('images')
+                    .toCollection()
+                    .modify((record) => {
+                        record.timestamp = record.timestamp || Date.now();
+                        record.size = record.blob?.size || 0;
+                        record.compressed = false;
+                    });
             });
-        });
 
         this.images = this.table('images');
         this.metadata = this.table('metadata');
@@ -76,17 +81,14 @@ export class ImageDB extends Dexie {
      */
     async cleanupOldImages(maxAge: number = 7 * 24 * 60 * 60 * 1000): Promise<number> {
         const cutoffTime = Date.now() - maxAge;
-        
-        const oldImages = await this.images
-            .where('timestamp')
-            .below(cutoffTime)
-            .toArray();
+
+        const oldImages = await this.images.where('timestamp').below(cutoffTime).toArray();
 
         if (oldImages.length === 0) {
             return 0;
         }
 
-        const filenames = oldImages.map(img => img.filename);
+        const filenames = oldImages.map((img) => img.filename);
 
         await this.transaction('rw', [this.images, this.metadata], async () => {
             await this.images.where('filename').anyOf(filenames).delete();
@@ -107,7 +109,7 @@ export class ImageDB extends Dexie {
         newestImage?: number;
     }> {
         const images = await this.images.toArray();
-        
+
         if (images.length === 0) {
             return {
                 totalImages: 0,
@@ -117,7 +119,7 @@ export class ImageDB extends Dexie {
         }
 
         const totalSize = images.reduce((sum, img) => sum + (img.size || 0), 0);
-        const timestamps = images.map(img => img.timestamp || 0).filter(t => t > 0);
+        const timestamps = images.map((img) => img.timestamp || 0).filter((t) => t > 0);
 
         return {
             totalImages: images.length,
@@ -146,11 +148,14 @@ export const db = new ImageDB();
 // Periodic cleanup
 if (typeof window !== 'undefined') {
     // Clean up old images on page load
-    db.ready(() => {
-        db.cleanupOldImages().then(deletedCount => {
+    db.open()
+        .then(() => {
+            return db.cleanupOldImages();
+        })
+        .then((deletedCount) => {
             if (deletedCount > 0) {
                 console.log(`Cleaned up ${deletedCount} old images from IndexedDB`);
             }
-        }).catch(console.error);
-    });
+        })
+        .catch(console.error);
 }

@@ -8,15 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import {
-    Eraser,
-    Save,
-    Loader2,
-    ScanEye,
-    UploadCloud,
-    Lock,
-    LockOpen
-} from 'lucide-react';
+import { Eraser, Save, Loader2, ScanEye, UploadCloud, Lock, LockOpen } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 
@@ -69,7 +61,7 @@ type EditingFormProps = {
     setEditMaskPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-// const RadioItemWithIcon = ({ // Commented out - radio selectors removed  
+// const RadioItemWithIcon = ({ // Commented out - radio selectors removed
 //     value,
 //     id,
 //     label,
@@ -176,7 +168,7 @@ export function EditingForm({
 
     React.useEffect(() => {
         if (!isEditingGeneratedImage) return;
-        
+
         const displayCtx = canvasRef.current?.getContext('2d');
         const displayCanvas = canvasRef.current;
         const feedbackCanvas = visualFeedbackCanvasRef.current;
@@ -212,16 +204,19 @@ export function EditingForm({
     }, [imageFiles, sourceImagePreviewUrls]);
 
     // Handle dropzone image changes
-    const handleDropZoneImagesChange = React.useCallback((newImageFiles: ImageFile[]) => {
-        setImageDropZoneFiles(newImageFiles);
-        
-        // Update the legacy imageFiles and sourceImagePreviewUrls states
-        const files = newImageFiles.map(imageFile => imageFile.file);
-        const previewUrls = newImageFiles.map(imageFile => imageFile.previewUrl);
-        
-        setImageFiles(files);
-        setSourceImagePreviewUrls(previewUrls);
-    }, [setImageFiles, setSourceImagePreviewUrls]);
+    const handleDropZoneImagesChange = React.useCallback(
+        (newImageFiles: ImageFile[]) => {
+            setImageDropZoneFiles(newImageFiles);
+
+            // Update the legacy imageFiles and sourceImagePreviewUrls states
+            const files = newImageFiles.map((imageFile) => imageFile.file);
+            const previewUrls = newImageFiles.map((imageFile) => imageFile.previewUrl);
+
+            setImageFiles(files);
+            setSourceImagePreviewUrls(previewUrls);
+        },
+        [setImageFiles, setSourceImagePreviewUrls]
+    );
 
     // All mask-related functions - conditional on isEditingGeneratedImage
     const getMousePos = (e: React.MouseEvent | React.TouchEvent) => {
@@ -336,8 +331,6 @@ export function EditingForm({
         }, 'image/png');
     };
 
-
-
     const handleMaskFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !editOriginalImageSize) {
@@ -415,13 +408,14 @@ export function EditingForm({
         onSubmit(formData);
     };
 
-
     return (
         <Card className='flex h-full w-full flex-col overflow-hidden rounded-lg border border-white/10 bg-black'>
             <CardHeader className='flex items-start justify-between border-b border-white/10 pb-4'>
                 <div>
                     <div className='flex items-center'>
-                        <CardTitle className='py-1 text-lg font-medium text-white'>Skab miljøbilleder ud fra packshots</CardTitle>
+                        <CardTitle className='py-1 text-lg font-medium text-white'>
+                            Skab miljøbilleder ud fra packshots
+                        </CardTitle>
                         {isPasswordRequiredByBackend && (
                             <Button
                                 variant='ghost'
@@ -433,7 +427,9 @@ export function EditingForm({
                             </Button>
                         )}
                     </div>
-                    <CardDescription className='mt-1 text-white/60'>Upload et eller flere packshots og vælg en template eller lav eget prompt.</CardDescription>
+                    <CardDescription className='mt-1 text-white/60'>
+                        Upload et eller flere packshots og vælg en template eller lav eget prompt.
+                    </CardDescription>
                 </div>
                 <ModeToggle currentMode={currentMode} onModeChange={onModeChange} />
             </CardHeader>
@@ -450,14 +446,8 @@ export function EditingForm({
                     </div>
 
                     <div className='space-y-1.5'>
-                        <Label className='text-white'>
-                            Prompt
-                        </Label>
-                        <PromptTemplateSelector 
-                            value={editPrompt}
-                            onChange={setEditPrompt}
-                            imageFiles={imageFiles}
-                        />
+                        <Label className='text-white'>Prompt</Label>
+                        <PromptTemplateSelector value={editPrompt} onChange={setEditPrompt} imageFiles={imageFiles} />
                     </div>
 
                     {/* Conditional Mask Editor - only for generated images */}
@@ -475,7 +465,7 @@ export function EditingForm({
                                     {editShowMaskEditor ? 'Skjul mask editor' : 'Vis mask editor'}
                                 </Button>
                             </div>
-                            
+
                             {editShowMaskEditor && (
                                 <div className='space-y-4 rounded-lg border border-white/10 bg-white/5 p-4'>
                                     <div className='space-y-2'>
@@ -493,7 +483,7 @@ export function EditingForm({
                                             className='[&>button]:border-black [&>button]:bg-white [&>button]:ring-offset-black [&>span:first-child]:h-1 [&>span:first-child>span]:bg-white'
                                         />
                                     </div>
-                                    
+
                                     <div className='space-y-2'>
                                         <Label className='text-white'>Lærred</Label>
                                         <div className='relative overflow-hidden rounded border border-white/20'>
@@ -510,8 +500,8 @@ export function EditingForm({
                                                 width={editOriginalImageSize?.width || 512}
                                                 height={editOriginalImageSize?.height || 512}
                                                 className='absolute inset-0 max-h-64 w-full cursor-crosshair'
-                                                style={{ 
-                                                    width: '100%', 
+                                                style={{
+                                                    width: '100%',
                                                     height: 'auto',
                                                     maxHeight: '16rem',
                                                     objectFit: 'contain'
@@ -525,10 +515,11 @@ export function EditingForm({
                                             />
                                         </div>
                                         <p className='text-xs text-white/60'>
-                                            Tegn på billedet for at markere områder, du vil redigere. Røde områder vil blive erstattet.
+                                            Tegn på billedet for at markere områder, du vil redigere. Røde områder vil
+                                            blive erstattet.
                                         </p>
                                     </div>
-                                    
+
                                     <div className='flex gap-2'>
                                         <Button
                                             type='button'
@@ -540,7 +531,7 @@ export function EditingForm({
                                             <Eraser className='mr-2 h-4 w-4' />
                                             Ryd mask
                                         </Button>
-                                        
+
                                         <Button
                                             type='button'
                                             variant='outline'
@@ -551,7 +542,7 @@ export function EditingForm({
                                             <Save className='mr-2 h-4 w-4' />
                                             {editIsMaskSaved ? 'Mask gemt' : 'Gem mask'}
                                         </Button>
-                                        
+
                                         <Input
                                             ref={maskInputRef}
                                             type='file'
@@ -570,7 +561,7 @@ export function EditingForm({
                                             Upload mask
                                         </Button>
                                     </div>
-                                    
+
                                     {editMaskPreviewUrl && (
                                         <div className='space-y-2'>
                                             <Label className='text-white'>Mask preview</Label>

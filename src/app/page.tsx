@@ -2,7 +2,8 @@
 
 import { EditingForm, type EditingFormData } from '@/components/editing-form';
 // import { GenerationForm, type GenerationFormData } from '@/components/generation-form'; // Commented out - generation disabled
-import type { GenerationFormData } from '@/components/generation-form'; // Import type only for compatibility
+import type { GenerationFormData } from '@/components/generation-form';
+// Import type only for compatibility
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
 // import { MoodboardCenter, type GeneratedImage } from '@/components/moodboard-center'; // Commented out - moodboard disabled
@@ -314,200 +315,203 @@ export default function HomePage() {
         return 'image/png';
     };
 
-    const handleApiCall = React.useCallback(async (formData: GenerationFormData | EditingFormData) => {
-        const startTime = Date.now();
-        let durationMs = 0;
+    const handleApiCall = React.useCallback(
+        async (formData: GenerationFormData | EditingFormData) => {
+            const startTime = Date.now();
+            let durationMs = 0;
 
-        setIsLoading(true);
-        setError(null);
-        setLatestImageBatch(null);
-        setImageOutputView('grid');
+            setIsLoading(true);
+            setError(null);
+            setLatestImageBatch(null);
+            setImageOutputView('grid');
 
-        const apiFormData = new FormData();
-        if (isPasswordRequiredByBackend && clientPasswordHash) {
-            apiFormData.append('passwordHash', clientPasswordHash);
-        } else if (isPasswordRequiredByBackend && !clientPasswordHash) {
-            setError('Password is required. Please configure the password by clicking the lock icon.');
-            setPasswordDialogContext('initial');
-            setIsPasswordDialogOpen(true);
-            setIsLoading(false);
-            return;
-        }
-        apiFormData.append('mode', mode);
+            const apiFormData = new FormData();
+            if (isPasswordRequiredByBackend && clientPasswordHash) {
+                apiFormData.append('passwordHash', clientPasswordHash);
+            } else if (isPasswordRequiredByBackend && !clientPasswordHash) {
+                setError('Password is required. Please configure the password by clicking the lock icon.');
+                setPasswordDialogContext('initial');
+                setIsPasswordDialogOpen(true);
+                setIsLoading(false);
+                return;
+            }
+            apiFormData.append('mode', mode);
 
-        // Only edit mode is supported
-        apiFormData.append('prompt', editPrompt);
-        apiFormData.append('n', editN[0].toString());
-        apiFormData.append('size', '1024x1024'); // Always use square format
-        apiFormData.append('quality', 'high'); // Always use high quality
+            // Only edit mode is supported
+            apiFormData.append('prompt', editPrompt);
+            apiFormData.append('n', editN[0].toString());
+            apiFormData.append('size', '1024x1024'); // Always use square format
+            apiFormData.append('quality', 'high'); // Always use high quality
 
-        editImageFiles.forEach((file, index) => {
-            apiFormData.append(`image_${index}`, file, file.name);
-        });
-        if (editGeneratedMaskFile) {
-            apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
-        }
-
-        console.log('Sending request to /api/images with mode:', mode);
-
-        try {
-            console.log('Starting fetch request...');
-            
-            // Create manual abort controller with longer timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => {
-                controller.abort();
-            }, 300000); // 5 minutes
-            
-            const response = await fetch('/api/images', {
-                method: 'POST',
-                body: apiFormData,
-                signal: controller.signal
+            editImageFiles.forEach((file, index) => {
+                apiFormData.append(`image_${index}`, file, file.name);
             });
-            
-            clearTimeout(timeoutId);
-            console.log('Fetch completed with status:', response.status);
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 401 && isPasswordRequiredByBackend) {
-                    setError('Unauthorized: Invalid or missing password. Please try again.');
-                    setPasswordDialogContext('retry');
-                    setLastApiCallArgs([formData]);
-                    setIsPasswordDialogOpen(true);
-
-                    return;
-                }
-                throw new Error(result.error || `API request failed with status ${response.status}`);
+            if (editGeneratedMaskFile) {
+                apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
             }
 
-            console.log('API Response:', result);
+            console.log('Sending request to /api/images with mode:', mode);
 
-            if (result.images && result.images.length > 0) {
-                durationMs = Date.now() - startTime;
-                console.log(`API call successful. Duration: ${durationMs}ms`);
+            try {
+                console.log('Starting fetch request...');
 
-                let historyQuality: 'low' | 'medium' | 'high' | 'auto' = 'auto';
-                let historyBackground: 'transparent' | 'opaque' | 'auto' = 'auto';
-                let historyModeration: 'low' | 'auto' = 'auto';
-                let historyOutputFormat: 'png' | 'jpeg' | 'webp' = 'png';
-                let historyPrompt: string = '';
+                // Create manual abort controller with longer timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                }, 300000); // 5 minutes
 
-                // Only edit mode is supported
-                historyQuality = 'high'; // Always use high quality
-                historyBackground = 'auto';
-                historyModeration = 'auto';
-                historyOutputFormat = 'png';
-                historyPrompt = editPrompt;
+                const response = await fetch('/api/images', {
+                    method: 'POST',
+                    body: apiFormData,
+                    signal: controller.signal
+                });
 
-                const costDetails = calculateApiCost(result.usage);
+                clearTimeout(timeoutId);
+                console.log('Fetch completed with status:', response.status);
 
-                const batchTimestamp = Date.now();
-                const newHistoryEntry: HistoryMetadata = {
-                    timestamp: batchTimestamp,
-                    images: result.images.map((img: { filename: string }) => ({ filename: img.filename })),
-                    storageModeUsed: effectiveStorageModeClient,
-                    durationMs: durationMs,
-                    quality: historyQuality,
-                    background: historyBackground,
-                    moderation: historyModeration,
-                    output_format: historyOutputFormat,
-                    prompt: historyPrompt,
-                    mode: mode,
-                    costDetails: costDetails
-                };
+                const result = await response.json();
 
-                let newImageBatchPromises: Promise<{ path: string; filename: string } | null>[] = [];
-                if (effectiveStorageModeClient === 'indexeddb') {
-                    console.log('Processing images for IndexedDB storage...');
-                    newImageBatchPromises = result.images.map(async (img: ApiImageResponseItem) => {
-                        if (img.b64_json) {
-                            try {
-                                const byteCharacters = atob(img.b64_json);
-                                const byteNumbers = new Array(byteCharacters.length);
-                                for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                if (!response.ok) {
+                    if (response.status === 401 && isPasswordRequiredByBackend) {
+                        setError('Unauthorized: Invalid or missing password. Please try again.');
+                        setPasswordDialogContext('retry');
+                        setLastApiCallArgs([formData]);
+                        setIsPasswordDialogOpen(true);
+
+                        return;
+                    }
+                    throw new Error(result.error || `API request failed with status ${response.status}`);
+                }
+
+                console.log('API Response:', result);
+
+                if (result.images && result.images.length > 0) {
+                    durationMs = Date.now() - startTime;
+                    console.log(`API call successful. Duration: ${durationMs}ms`);
+
+                    let historyQuality: 'low' | 'medium' | 'high' | 'auto' = 'auto';
+                    let historyBackground: 'transparent' | 'opaque' | 'auto' = 'auto';
+                    let historyModeration: 'low' | 'auto' = 'auto';
+                    let historyOutputFormat: 'png' | 'jpeg' | 'webp' = 'png';
+                    let historyPrompt: string = '';
+
+                    // Only edit mode is supported
+                    historyQuality = 'high'; // Always use high quality
+                    historyBackground = 'auto';
+                    historyModeration = 'auto';
+                    historyOutputFormat = 'png';
+                    historyPrompt = editPrompt;
+
+                    const costDetails = calculateApiCost(result.usage);
+
+                    const batchTimestamp = Date.now();
+                    const newHistoryEntry: HistoryMetadata = {
+                        timestamp: batchTimestamp,
+                        images: result.images.map((img: { filename: string }) => ({ filename: img.filename })),
+                        storageModeUsed: effectiveStorageModeClient,
+                        durationMs: durationMs,
+                        quality: historyQuality,
+                        background: historyBackground,
+                        moderation: historyModeration,
+                        output_format: historyOutputFormat,
+                        prompt: historyPrompt,
+                        mode: mode,
+                        costDetails: costDetails
+                    };
+
+                    let newImageBatchPromises: Promise<{ path: string; filename: string } | null>[] = [];
+                    if (effectiveStorageModeClient === 'indexeddb') {
+                        console.log('Processing images for IndexedDB storage...');
+                        newImageBatchPromises = result.images.map(async (img: ApiImageResponseItem) => {
+                            if (img.b64_json) {
+                                try {
+                                    const byteCharacters = atob(img.b64_json);
+                                    const byteNumbers = new Array(byteCharacters.length);
+                                    for (let i = 0; i < byteCharacters.length; i++) {
+                                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                    }
+                                    const byteArray = new Uint8Array(byteNumbers);
+
+                                    const actualMimeType = getMimeTypeFromFormat(img.output_format);
+                                    const blob = new Blob([byteArray], { type: actualMimeType });
+
+                                    await db.images.put({ filename: img.filename, blob });
+                                    console.log(`Saved ${img.filename} to IndexedDB with type ${actualMimeType}.`);
+
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    setBlobUrlCache((prev) => ({ ...prev, [img.filename]: blobUrl }));
+
+                                    return { filename: img.filename, path: blobUrl };
+                                } catch (dbError) {
+                                    console.error(`Error saving blob ${img.filename} to IndexedDB:`, dbError);
+                                    setError(`Failed to save image ${img.filename} to local database.`);
+                                    return null;
                                 }
-                                const byteArray = new Uint8Array(byteNumbers);
-
-                                const actualMimeType = getMimeTypeFromFormat(img.output_format);
-                                const blob = new Blob([byteArray], { type: actualMimeType });
-
-                                await db.images.put({ filename: img.filename, blob });
-                                console.log(`Saved ${img.filename} to IndexedDB with type ${actualMimeType}.`);
-
-                                const blobUrl = URL.createObjectURL(blob);
-                                setBlobUrlCache((prev) => ({ ...prev, [img.filename]: blobUrl }));
-
-                                return { filename: img.filename, path: blobUrl };
-                            } catch (dbError) {
-                                console.error(`Error saving blob ${img.filename} to IndexedDB:`, dbError);
-                                setError(`Failed to save image ${img.filename} to local database.`);
+                            } else {
+                                console.warn(`Image ${img.filename} missing b64_json in indexeddb mode.`);
                                 return null;
                             }
-                        } else {
-                            console.warn(`Image ${img.filename} missing b64_json in indexeddb mode.`);
-                            return null;
-                        }
-                    });
+                        });
+                    } else {
+                        newImageBatchPromises = result.images
+                            .filter((img: ApiImageResponseItem) => !!img.path)
+                            .map((img: ApiImageResponseItem) =>
+                                Promise.resolve({
+                                    path: img.path!,
+                                    filename: img.filename
+                                })
+                            );
+                    }
+
+                    const processedImages = (await Promise.all(newImageBatchPromises)).filter(Boolean) as {
+                        path: string;
+                        filename: string;
+                    }[];
+
+                    setLatestImageBatch(processedImages);
+                    setImageOutputView(processedImages.length > 1 ? 'grid' : 0);
+
+                    setHistory((prevHistory) => [newHistoryEntry, ...prevHistory]);
                 } else {
-                    newImageBatchPromises = result.images
-                        .filter((img: ApiImageResponseItem) => !!img.path)
-                        .map((img: ApiImageResponseItem) =>
-                            Promise.resolve({
-                                path: img.path!,
-                                filename: img.filename
-                            })
-                        );
+                    setLatestImageBatch(null);
+                    throw new Error('API response did not contain valid image data or filenames.');
+                }
+            } catch (err: unknown) {
+                durationMs = Date.now() - startTime;
+                console.error(`API Call Error after ${durationMs}ms:`, err);
+
+                let errorMessage = 'An unexpected error occurred.';
+                if (err instanceof Error) {
+                    if (err.name === 'AbortError') {
+                        errorMessage = 'Request timed out. Image generation can take up to 2 minutes.';
+                    } else if (err.message === 'Failed to fetch') {
+                        errorMessage = 'Network error. Please check your connection and try again.';
+                    } else {
+                        errorMessage = err.message;
+                    }
                 }
 
-                const processedImages = (await Promise.all(newImageBatchPromises)).filter(Boolean) as {
-                    path: string;
-                    filename: string;
-                }[];
-
-                setLatestImageBatch(processedImages);
-                setImageOutputView(processedImages.length > 1 ? 'grid' : 0);
-
-                setHistory((prevHistory) => [newHistoryEntry, ...prevHistory]);
-            } else {
+                setError(errorMessage);
                 setLatestImageBatch(null);
-                throw new Error('API response did not contain valid image data or filenames.');
+            } finally {
+                if (durationMs === 0) durationMs = Date.now() - startTime;
+                setIsLoading(false);
             }
-        } catch (err: unknown) {
-            durationMs = Date.now() - startTime;
-            console.error(`API Call Error after ${durationMs}ms:`, err);
-            
-            let errorMessage = 'An unexpected error occurred.';
-            if (err instanceof Error) {
-                if (err.name === 'AbortError') {
-                    errorMessage = 'Request timed out. Image generation can take up to 2 minutes.';
-                } else if (err.message === 'Failed to fetch') {
-                    errorMessage = 'Network error. Please check your connection and try again.';
-                } else {
-                    errorMessage = err.message;
-                }
-            }
-            
-            setError(errorMessage);
-            setLatestImageBatch(null);
-        } finally {
-            if (durationMs === 0) durationMs = Date.now() - startTime;
-            setIsLoading(false);
-        }
-    }, [
-        isPasswordRequiredByBackend,
-        clientPasswordHash,
-        mode,
-        editPrompt,
-        editN,
-        // editSize, // Commented out - size fixed to square
-        // editQuality, // Commented out - quality fixed to high
-        editImageFiles,
-        editGeneratedMaskFile,
-        setBlobUrlCache
-    ]);
+        },
+        [
+            isPasswordRequiredByBackend,
+            clientPasswordHash,
+            mode,
+            editPrompt,
+            editN,
+            // editSize, // Commented out - size fixed to square
+            // editQuality, // Commented out - quality fixed to high
+            editImageFiles,
+            editGeneratedMaskFile,
+            setBlobUrlCache
+        ]
+    );
 
     const handleHistorySelect = (item: HistoryMetadata) => {
         console.log(
@@ -579,89 +583,92 @@ export default function HomePage() {
         }
     };
 
-    const handleSendToEdit = React.useCallback(async (filename: string) => {
-        if (isSendingToEdit) return;
-        setIsSendingToEdit(true);
-        setError(null);
+    const handleSendToEdit = React.useCallback(
+        async (filename: string) => {
+            if (isSendingToEdit) return;
+            setIsSendingToEdit(true);
+            setError(null);
 
-        const alreadyExists = editImageFiles.some((file) => file.name === filename);
-        if (mode === 'edit' && alreadyExists) {
-            console.log(`Image ${filename} already in edit list.`);
-            setIsSendingToEdit(false);
-            return;
-        }
+            const alreadyExists = editImageFiles.some((file) => file.name === filename);
+            if (mode === 'edit' && alreadyExists) {
+                console.log(`Image ${filename} already in edit list.`);
+                setIsSendingToEdit(false);
+                return;
+            }
 
-        if (mode === 'edit' && editImageFiles.length >= MAX_EDIT_IMAGES) {
-            setError(`Cannot add more than ${MAX_EDIT_IMAGES} images to the edit form.`);
-            setIsSendingToEdit(false);
-            return;
-        }
+            if (mode === 'edit' && editImageFiles.length >= MAX_EDIT_IMAGES) {
+                setError(`Cannot add more than ${MAX_EDIT_IMAGES} images to the edit form.`);
+                setIsSendingToEdit(false);
+                return;
+            }
 
-        console.log(`Sending image ${filename} to edit...`);
+            console.log(`Sending image ${filename} to edit...`);
 
-        try {
-            let blob: Blob | undefined;
-            let mimeType: string = 'image/png';
+            try {
+                let blob: Blob | undefined;
+                let mimeType: string = 'image/png';
 
-            if (effectiveStorageModeClient === 'indexeddb') {
-                console.log(`Fetching blob ${filename} from IndexedDB...`);
+                if (effectiveStorageModeClient === 'indexeddb') {
+                    console.log(`Fetching blob ${filename} from IndexedDB...`);
 
-                const record = allDbImages?.find((img) => img.filename === filename);
-                if (record?.blob) {
-                    blob = record.blob;
-                    mimeType = blob.type || mimeType;
-                    console.log(`Found blob ${filename} in IndexedDB.`);
+                    const record = allDbImages?.find((img) => img.filename === filename);
+                    if (record?.blob) {
+                        blob = record.blob;
+                        mimeType = blob.type || mimeType;
+                        console.log(`Found blob ${filename} in IndexedDB.`);
+                    } else {
+                        throw new Error(`Image ${filename} not found in local database.`);
+                    }
                 } else {
-                    throw new Error(`Image ${filename} not found in local database.`);
+                    console.log(`Fetching image ${filename} from API...`);
+                    // Always use the API endpoint for fetching images in filesystem mode
+                    const response = await fetch(`/api/image/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch image: ${response.statusText}`);
+                    }
+                    blob = await response.blob();
+                    mimeType = response.headers.get('Content-Type') || mimeType;
+                    console.log(`Fetched image ${filename} from API.`);
                 }
-            } else {
-                console.log(`Fetching image ${filename} from API...`);
-                // Always use the API endpoint for fetching images in filesystem mode
-                const response = await fetch(`/api/image/${filename}`);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch image: ${response.statusText}`);
+
+                if (!blob) {
+                    throw new Error(`Could not retrieve image data for ${filename}.`);
                 }
-                blob = await response.blob();
-                mimeType = response.headers.get('Content-Type') || mimeType;
-                console.log(`Fetched image ${filename} from API.`);
-            }
 
-            if (!blob) {
-                throw new Error(`Could not retrieve image data for ${filename}.`);
-            }
+                const newFile = new File([blob], filename, { type: mimeType });
+                const newPreviewUrl = URL.createObjectURL(blob);
 
-            const newFile = new File([blob], filename, { type: mimeType });
-            const newPreviewUrl = URL.createObjectURL(blob);
+                editSourceImagePreviewUrls.forEach((url) => {
+                    try {
+                        URL.revokeObjectURL(url);
+                    } catch (error) {
+                        // Silently ignore errors if URL was already revoked
+                        console.debug('Error revoking blob URL in handleSendToEdit:', error);
+                    }
+                });
 
-            editSourceImagePreviewUrls.forEach((url) => {
-                try {
-                    URL.revokeObjectURL(url);
-                } catch (error) {
-                    // Silently ignore errors if URL was already revoked
-                    console.debug('Error revoking blob URL in handleSendToEdit:', error);
+                setEditImageFiles([newFile]);
+                setEditSourceImagePreviewUrls([newPreviewUrl]);
+
+                // Check if this image was generated (has a timestamp in filename indicating it's from our system)
+                const isFromGeneration = /^\d{13}-\d+\.(png|jpg|jpeg|webp)$/i.test(filename);
+                setIsEditingGeneratedImage(isFromGeneration);
+
+                if (mode === 'generate') {
+                    setMode('edit');
                 }
-            });
 
-            setEditImageFiles([newFile]);
-            setEditSourceImagePreviewUrls([newPreviewUrl]);
-            
-            // Check if this image was generated (has a timestamp in filename indicating it's from our system)
-            const isFromGeneration = /^\d{13}-\d+\.(png|jpg|jpeg|webp)$/i.test(filename);
-            setIsEditingGeneratedImage(isFromGeneration);
-
-            if (mode === 'generate') {
-                setMode('edit');
+                console.log(`Successfully set ${filename} in edit form. Generated image: ${isFromGeneration}`);
+            } catch (err: unknown) {
+                console.error('Error sending image to edit:', err);
+                const errorMessage = err instanceof Error ? err.message : 'Failed to send image to edit form.';
+                setError(errorMessage);
+            } finally {
+                setIsSendingToEdit(false);
             }
-
-            console.log(`Successfully set ${filename} in edit form. Generated image: ${isFromGeneration}`);
-        } catch (err: unknown) {
-            console.error('Error sending image to edit:', err);
-            const errorMessage = err instanceof Error ? err.message : 'Failed to send image to edit form.';
-            setError(errorMessage);
-        } finally {
-            setIsSendingToEdit(false);
-        }
-    }, [isSendingToEdit, allDbImages, editSourceImagePreviewUrls, editImageFiles, mode, setIsEditingGeneratedImage]);
+        },
+        [isSendingToEdit, allDbImages, editSourceImagePreviewUrls, editImageFiles, mode, setIsEditingGeneratedImage]
+    );
 
     const executeDeleteItem = async (item: HistoryMetadata) => {
         if (!item) return;
@@ -738,13 +745,13 @@ export default function HomePage() {
         try {
             // For filesystem mode, we need to use the API endpoint instead of the direct path
             const apiUrl = effectiveStorageModeClient === 'fs' ? `/api/image/${filename}` : imageUrl;
-            
+
             const downloadableImage: DownloadableImage = {
                 filename,
                 url: apiUrl,
                 timestamp: Date.now()
             };
-            
+
             await downloadSingleImage(downloadableImage);
             console.log(`Successfully downloaded ${filename}`);
         } catch (error) {
@@ -753,28 +760,81 @@ export default function HomePage() {
         }
     }, []);
 
-    const handleContinueEditing = React.useCallback(async (filename: string) => {
-        try {
-            // First, send the image to edit form
-            await handleSendToEdit(filename);
-            
-            // The setIsEditingGeneratedImage is already handled in handleSendToEdit based on filename pattern
-            // No need to set it again here to avoid race conditions
-            
-            // Then append "further edit this image" to the current prompt
-            if (editPrompt.trim()) {
-                const continuationPrompt = editPrompt + ', further edit this image';
-                setEditPrompt(continuationPrompt);
-            } else {
-                setEditPrompt('Further edit this image');
+    const handleContinueEditing = React.useCallback(
+        async (filename: string) => {
+            try {
+                // First, send the image to edit form
+                await handleSendToEdit(filename);
+
+                // The setIsEditingGeneratedImage is already handled in handleSendToEdit based on filename pattern
+                // No need to set it again here to avoid race conditions
+
+                // Then append "further edit this image" to the current prompt
+                if (editPrompt.trim()) {
+                    const continuationPrompt = editPrompt + ', further edit this image';
+                    setEditPrompt(continuationPrompt);
+                } else {
+                    setEditPrompt('Further edit this image');
+                }
+
+                console.log(`Continuing to edit ${filename}`);
+            } catch (error) {
+                console.error('Error setting up continued editing:', error);
+                setError(`Failed to continue editing: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
-            
-            console.log(`Continuing to edit ${filename}`);
-        } catch (error) {
-            console.error('Error setting up continued editing:', error);
-            setError(`Failed to continue editing: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-    }, [editPrompt, handleSendToEdit, setEditPrompt]);
+        },
+        [editPrompt, handleSendToEdit, setEditPrompt]
+    );
+
+    const handleQuickEdit = React.useCallback(
+        async (filename: string, editText: string) => {
+            try {
+                // First, get the image file for the quick edit
+                let imageFile: File;
+                let mimeType: string = 'image/png';
+
+                if (effectiveStorageModeClient === 'indexeddb') {
+                    console.log(`Fetching blob ${filename} from IndexedDB for quick edit...`);
+                    const record = allDbImages?.find((img) => img.filename === filename);
+                    if (record?.blob) {
+                        mimeType = record.blob.type || mimeType;
+                        imageFile = new File([record.blob], filename, { type: mimeType });
+                    } else {
+                        throw new Error(`Image ${filename} not found in local database.`);
+                    }
+                } else {
+                    console.log(`Fetching image ${filename} from API for quick edit...`);
+                    const response = await fetch(`/api/image/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch image: ${response.statusText}`);
+                    }
+                    const blob = await response.blob();
+                    mimeType = response.headers.get('Content-Type') || mimeType;
+                    imageFile = new File([blob], filename, { type: mimeType });
+                }
+
+                console.log(`Quick edit initiated for ${filename} with prompt: ${editText}`);
+
+                // Create the form data for immediate submission
+                const quickEditFormData: EditingFormData = {
+                    prompt: editText,
+                    n: editN[0],
+                    size: '1024x1024',
+                    quality: 'high',
+                    imageFiles: [imageFile],
+                    maskFile: null // Quick edit doesn't use masks
+                };
+
+                console.log('Automatically submitting quick edit to API...', quickEditFormData);
+                await handleApiCall(quickEditFormData);
+            } catch (error) {
+                console.error('Error during quick edit:', error);
+                setError(`Failed to process quick edit: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                throw error; // Re-throw to let the ImageOutput component handle loading state
+            }
+        },
+        [effectiveStorageModeClient, allDbImages, editN, handleApiCall]
+    );
 
     // Moodboard handlers commented out
 
@@ -872,6 +932,7 @@ export default function HomePage() {
                             altText='Generated image output'
                             isLoading={isLoading || isSendingToEdit}
                             onSendToEdit={handleSendToEdit}
+                            onQuickEdit={handleQuickEdit}
                             onDownload={handleDownloadImage}
                             onContinueEditing={handleContinueEditing}
                             currentMode={mode}

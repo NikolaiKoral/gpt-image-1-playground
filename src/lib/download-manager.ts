@@ -26,15 +26,15 @@ export async function downloadSingleImage(
 
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        
+
         const link = document.createElement('a');
         link.href = url;
         link.download = generateFilename(image, options.namingPattern || 'original');
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         URL.revokeObjectURL(url);
     } catch (error) {
         console.error('Error downloading image:', error);
@@ -49,9 +49,7 @@ export async function downloadMultipleImages(
     images: DownloadableImage[],
     options: Partial<DownloadOptions> = {}
 ): Promise<void> {
-    const downloadPromises = images.map(image => 
-        downloadSingleImage(image, options)
-    );
+    const downloadPromises = images.map((image) => downloadSingleImage(image, options));
 
     try {
         await Promise.all(downloadPromises);
@@ -77,7 +75,7 @@ export async function downloadImagesAsZip(
         if (options.includeMetadata) {
             const metadata = {
                 exportDate: new Date().toISOString(),
-                images: images.map(img => ({
+                images: images.map((img) => ({
                     filename: img.filename,
                     presetName: img.presetName,
                     timestamp: img.timestamp,
@@ -94,7 +92,7 @@ export async function downloadImagesAsZip(
                 if (!response.ok) {
                     throw new Error(`Failed to fetch ${image.filename}: ${response.statusText}`);
                 }
-                
+
                 const blob = await response.blob();
                 const filename = generateFilename(image, options.namingPattern || 'original');
                 zip.file(filename, blob);
@@ -110,15 +108,15 @@ export async function downloadImagesAsZip(
         // Generate and download zip
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(zipBlob);
-        
+
         const link = document.createElement('a');
         link.href = url;
         link.download = `moodboard_images_${new Date().toISOString().split('T')[0]}.zip`;
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         URL.revokeObjectURL(url);
     } catch (error) {
         console.error('Error creating ZIP file:', error);
@@ -133,17 +131,15 @@ export async function downloadImagesAsZip(
 function generateFilename(image: DownloadableImage, pattern: string): string {
     const extension = getFileExtension(image.filename);
     const baseDate = new Date(image.timestamp);
-    
+
     switch (pattern) {
         case 'timestamp':
             return `image_${baseDate.toISOString().replace(/[:.]/g, '-')}${extension}`;
-        
+
         case 'preset':
-            const presetName = image.presetName 
-                ? image.presetName.toLowerCase().replace(/\s+/g, '-')
-                : 'no-preset';
+            const presetName = image.presetName ? image.presetName.toLowerCase().replace(/\s+/g, '-') : 'no-preset';
             return `${presetName}_${baseDate.getTime()}${extension}`;
-        
+
         case 'original':
         default:
             return image.filename;
@@ -186,11 +182,11 @@ export async function estimateDownloadSize(images: DownloadableImage[]): Promise
  */
 export function formatBytes(bytes: number): string {
     if (bytes === 0) return '0 B';
-    
+
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 

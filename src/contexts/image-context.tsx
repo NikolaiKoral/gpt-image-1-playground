@@ -1,23 +1,23 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import type { HistoryMetadata } from '@/app/page';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
 
 interface ImageState {
     // Image management
     editImageFiles: File[];
     editSourceImagePreviewUrls: string[];
     latestImageBatch: { path: string; filename: string }[] | null;
-    
+
     // UI state
     imageOutputView: 'grid' | number;
     isLoading: boolean;
     isSendingToEdit: boolean;
     error: string | null;
-    
+
     // History
     history: HistoryMetadata[];
-    
+
     // Blob cache
     blobUrlCache: Record<string, string>;
 }
@@ -43,7 +43,7 @@ const initialState: ImageState = {
     isSendingToEdit: false,
     error: null,
     history: [],
-    blobUrlCache: {},
+    blobUrlCache: {}
 };
 
 function imageReducer(state: ImageState, action: ImageAction): ImageState {
@@ -52,52 +52,52 @@ function imageReducer(state: ImageState, action: ImageAction): ImageState {
             return {
                 ...state,
                 editImageFiles: action.payload.files,
-                editSourceImagePreviewUrls: action.payload.previewUrls,
+                editSourceImagePreviewUrls: action.payload.previewUrls
             };
         case 'SET_LATEST_BATCH':
             return {
                 ...state,
-                latestImageBatch: action.payload,
+                latestImageBatch: action.payload
             };
         case 'SET_OUTPUT_VIEW':
             return {
                 ...state,
-                imageOutputView: action.payload,
+                imageOutputView: action.payload
             };
         case 'SET_LOADING':
             return {
                 ...state,
-                isLoading: action.payload,
+                isLoading: action.payload
             };
         case 'SET_SENDING_TO_EDIT':
             return {
                 ...state,
-                isSendingToEdit: action.payload,
+                isSendingToEdit: action.payload
             };
         case 'SET_ERROR':
             return {
                 ...state,
-                error: action.payload,
+                error: action.payload
             };
         case 'SET_HISTORY':
             return {
                 ...state,
-                history: action.payload,
+                history: action.payload
             };
         case 'ADD_HISTORY_ITEM':
             return {
                 ...state,
-                history: [action.payload, ...state.history],
+                history: [action.payload, ...state.history]
             };
         case 'UPDATE_BLOB_CACHE':
             return {
                 ...state,
-                blobUrlCache: { ...state.blobUrlCache, ...action.payload },
+                blobUrlCache: { ...state.blobUrlCache, ...action.payload }
             };
         case 'CLEAR_BLOB_CACHE':
             return {
                 ...state,
-                blobUrlCache: {},
+                blobUrlCache: {}
             };
         default:
             return state;
@@ -129,49 +129,45 @@ export function ImageProvider({ children }: { children: React.ReactNode }) {
         setEditImages: useCallback((files: File[], previewUrls: string[]) => {
             dispatch({ type: 'SET_EDIT_IMAGES', payload: { files, previewUrls } });
         }, []),
-        
+
         setLatestBatch: useCallback((batch: { path: string; filename: string }[] | null) => {
             dispatch({ type: 'SET_LATEST_BATCH', payload: batch });
         }, []),
-        
+
         setOutputView: useCallback((view: 'grid' | number) => {
             dispatch({ type: 'SET_OUTPUT_VIEW', payload: view });
         }, []),
-        
+
         setLoading: useCallback((loading: boolean) => {
             dispatch({ type: 'SET_LOADING', payload: loading });
         }, []),
-        
+
         setSendingToEdit: useCallback((sending: boolean) => {
             dispatch({ type: 'SET_SENDING_TO_EDIT', payload: sending });
         }, []),
-        
+
         setError: useCallback((error: string | null) => {
             dispatch({ type: 'SET_ERROR', payload: error });
         }, []),
-        
+
         setHistory: useCallback((history: HistoryMetadata[]) => {
             dispatch({ type: 'SET_HISTORY', payload: history });
         }, []),
-        
+
         addHistoryItem: useCallback((item: HistoryMetadata) => {
             dispatch({ type: 'ADD_HISTORY_ITEM', payload: item });
         }, []),
-        
+
         updateBlobCache: useCallback((cache: Record<string, string>) => {
             dispatch({ type: 'UPDATE_BLOB_CACHE', payload: cache });
         }, []),
-        
+
         clearBlobCache: useCallback(() => {
             dispatch({ type: 'CLEAR_BLOB_CACHE' });
-        }, []),
+        }, [])
     };
 
-    return (
-        <ImageContext.Provider value={{ state, actions }}>
-            {children}
-        </ImageContext.Provider>
-    );
+    return <ImageContext.Provider value={{ state, actions }}>{children}</ImageContext.Provider>;
 }
 
 export function useImageContext() {

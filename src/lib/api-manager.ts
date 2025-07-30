@@ -27,11 +27,7 @@ export class ApiRequestManager {
     /**
      * Enhanced fetch with retry logic and progress tracking
      */
-    async enhancedFetch(
-        url: string,
-        init: RequestInit = {},
-        options: ApiRequestOptions = {}
-    ): Promise<Response> {
+    async enhancedFetch(url: string, init: RequestInit = {}, options: ApiRequestOptions = {}): Promise<Response> {
         const {
             maxRetries = 3,
             retryDelay = 1000,
@@ -42,10 +38,10 @@ export class ApiRequestManager {
 
         const controller = new AbortController();
         const requestId = `${url}-${Date.now()}`;
-        
+
         // Use provided signal or create new one
         const effectiveSignal = signal || controller.signal;
-        
+
         this.activeRequests.set(requestId, controller);
 
         // Set up timeout
@@ -65,7 +61,7 @@ export class ApiRequestManager {
 
                     const response = await fetch(url, {
                         ...init,
-                        signal: effectiveSignal,
+                        signal: effectiveSignal
                     });
 
                     if (onProgress) {
@@ -82,7 +78,6 @@ export class ApiRequestManager {
 
                     // Server errors (5xx) can be retried
                     throw new Error(`Server error: ${response.status}`);
-
                 } catch (error) {
                     lastError = error instanceof Error ? error : new Error(String(error));
 
@@ -101,7 +96,6 @@ export class ApiRequestManager {
             }
 
             throw lastError || new Error('Max retries exceeded');
-
         } finally {
             clearTimeout(timeoutId);
             this.activeRequests.delete(requestId);
@@ -166,7 +160,7 @@ export class ApiRequestManager {
     }
 
     private delay(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 

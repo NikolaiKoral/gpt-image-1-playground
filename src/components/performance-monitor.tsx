@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Monitor, Activity, Database, Image, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { db } from '@/lib/db';
+import { Monitor, Activity, Database, Image, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
 interface PerformanceMetrics {
     memoryUsage: {
@@ -40,11 +40,13 @@ export function PerformanceMonitor({ isVisible = false }: { isVisible?: boolean 
             try {
                 // Memory usage
                 const memory = (performance as any).memory;
-                const memoryUsage = memory ? {
-                    used: memory.usedJSHeapSize,
-                    total: memory.totalJSHeapSize,
-                    percentage: (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
-                } : { used: 0, total: 0, percentage: 0 };
+                const memoryUsage = memory
+                    ? {
+                          used: memory.usedJSHeapSize,
+                          total: memory.totalJSHeapSize,
+                          percentage: (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
+                      }
+                    : { used: 0, total: 0, percentage: 0 };
 
                 // Storage stats
                 const storageStats = await db.getStorageStats();
@@ -68,7 +70,6 @@ export function PerformanceMonitor({ isVisible = false }: { isVisible?: boolean 
                     renderMetrics,
                     networkStats
                 });
-
             } catch (error) {
                 console.error('Failed to update performance metrics:', error);
             }
@@ -101,61 +102,59 @@ export function PerformanceMonitor({ isVisible = false }: { isVisible?: boolean 
     const memoryStatus = getMemoryStatus(metrics.memoryUsage.percentage);
 
     return (
-        <div className="fixed bottom-4 right-4 z-50">
-            <Card className="border border-white/10 bg-black/90 text-white backdrop-blur-sm">
-                <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-sm">
-                            <Monitor className="h-4 w-4" />
+        <div className='fixed right-4 bottom-4 z-50'>
+            <Card className='border border-white/10 bg-black/90 text-white backdrop-blur-sm'>
+                <CardHeader className='pb-2'>
+                    <div className='flex items-center justify-between'>
+                        <CardTitle className='flex items-center gap-2 text-sm'>
+                            <Monitor className='h-4 w-4' />
                             Performance
                         </CardTitle>
                         <Button
-                            variant="ghost"
-                            size="sm"
+                            variant='ghost'
+                            size='sm'
                             onClick={() => setIsExpanded(!isExpanded)}
-                            className="h-6 w-6 p-0 text-white/60 hover:text-white"
-                        >
+                            className='h-6 w-6 p-0 text-white/60 hover:text-white'>
                             {isExpanded ? '−' : '+'}
                         </Button>
                     </div>
                 </CardHeader>
-                
-                <CardContent className="pt-0">
+
+                <CardContent className='pt-0'>
                     {/* Always visible summary */}
-                    <div className="flex items-center gap-2 text-xs">
-                        <Badge 
-                            variant="outline" 
-                            className={`border-${memoryStatus.color}-500/50 text-${memoryStatus.color}-400`}
-                        >
-                            <Activity className="mr-1 h-3 w-3" />
+                    <div className='flex items-center gap-2 text-xs'>
+                        <Badge
+                            variant='outline'
+                            className={`border-${memoryStatus.color}-500/50 text-${memoryStatus.color}-400`}>
+                            <Activity className='mr-1 h-3 w-3' />
                             Memory: {metrics.memoryUsage.percentage.toFixed(1)}%
                         </Badge>
-                        <Badge variant="outline" className="border-blue-500/50 text-blue-400">
-                            <Database className="mr-1 h-3 w-3" />
+                        <Badge variant='outline' className='border-blue-500/50 text-blue-400'>
+                            <Database className='mr-1 h-3 w-3' />
                             {metrics.storageStats.totalImages} images
                         </Badge>
                     </div>
 
                     {/* Expanded details */}
                     {isExpanded && (
-                        <div className="mt-3 space-y-3 text-xs">
+                        <div className='mt-3 space-y-3 text-xs'>
                             {/* Memory Details */}
                             <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Activity className="h-3 w-3" />
-                                    <span className="font-medium">Memory Usage</span>
+                                <div className='mb-1 flex items-center gap-2'>
+                                    <Activity className='h-3 w-3' />
+                                    <span className='font-medium'>Memory Usage</span>
                                 </div>
-                                <div className="ml-5 space-y-1 text-white/70">
-                                    <div className="flex justify-between">
+                                <div className='ml-5 space-y-1 text-white/70'>
+                                    <div className='flex justify-between'>
                                         <span>Used:</span>
                                         <span>{formatBytes(metrics.memoryUsage.used)}</span>
                                     </div>
-                                    <div className="flex justify-between">
+                                    <div className='flex justify-between'>
                                         <span>Total:</span>
                                         <span>{formatBytes(metrics.memoryUsage.total)}</span>
                                     </div>
-                                    <div className="w-full bg-white/10 rounded h-1">
-                                        <div 
+                                    <div className='h-1 w-full rounded bg-white/10'>
+                                        <div
                                             className={`h-1 rounded bg-${memoryStatus.color}-500`}
                                             style={{ width: `${metrics.memoryUsage.percentage}%` }}
                                         />
@@ -165,20 +164,20 @@ export function PerformanceMonitor({ isVisible = false }: { isVisible?: boolean 
 
                             {/* Storage Details */}
                             <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Database className="h-3 w-3" />
-                                    <span className="font-medium">Storage</span>
+                                <div className='mb-1 flex items-center gap-2'>
+                                    <Database className='h-3 w-3' />
+                                    <span className='font-medium'>Storage</span>
                                 </div>
-                                <div className="ml-5 space-y-1 text-white/70">
-                                    <div className="flex justify-between">
+                                <div className='ml-5 space-y-1 text-white/70'>
+                                    <div className='flex justify-between'>
                                         <span>Images:</span>
                                         <span>{metrics.storageStats.totalImages}</span>
                                     </div>
-                                    <div className="flex justify-between">
+                                    <div className='flex justify-between'>
                                         <span>Total Size:</span>
                                         <span>{formatBytes(metrics.storageStats.totalSize)}</span>
                                     </div>
-                                    <div className="flex justify-between">
+                                    <div className='flex justify-between'>
                                         <span>Avg Size:</span>
                                         <span>{formatBytes(metrics.storageStats.averageSize)}</span>
                                     </div>
@@ -186,23 +185,22 @@ export function PerformanceMonitor({ isVisible = false }: { isVisible?: boolean 
                             </div>
 
                             {/* Quick Actions */}
-                            <div className="flex gap-2 pt-2 border-t border-white/10">
+                            <div className='flex gap-2 border-t border-white/10 pt-2'>
                                 <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-6 px-2 text-xs border-white/20 text-white/70 hover:text-white"
+                                    size='sm'
+                                    variant='outline'
+                                    className='h-6 border-white/20 px-2 text-xs text-white/70 hover:text-white'
                                     onClick={async () => {
                                         const deletedCount = await db.cleanupOldImages();
                                         console.log(`Cleaned up ${deletedCount} old images`);
-                                    }}
-                                >
-                                    <Database className="mr-1 h-3 w-3" />
+                                    }}>
+                                    <Database className='mr-1 h-3 w-3' />
                                     Cleanup
                                 </Button>
                                 <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-6 px-2 text-xs border-white/20 text-white/70 hover:text-white"
+                                    size='sm'
+                                    variant='outline'
+                                    className='h-6 border-white/20 px-2 text-xs text-white/70 hover:text-white'
                                     onClick={() => {
                                         if (window.gc) {
                                             window.gc();
@@ -210,9 +208,8 @@ export function PerformanceMonitor({ isVisible = false }: { isVisible?: boolean 
                                         } else {
                                             console.log('GC not available');
                                         }
-                                    }}
-                                >
-                                    <Zap className="mr-1 h-3 w-3" />
+                                    }}>
+                                    <Zap className='mr-1 h-3 w-3' />
                                     GC
                                 </Button>
                             </div>

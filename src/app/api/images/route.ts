@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
                 n: Math.max(1, Math.min(n || 1, 10)),
                 size: size === 'auto' ? undefined : size,
                 quality: quality === 'auto' ? undefined : quality,
-                input_fidelity: "high"
+                input_fidelity: 'high'
             };
 
             if (maskFile) {

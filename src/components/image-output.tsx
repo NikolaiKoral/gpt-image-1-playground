@@ -1,8 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Loader2, Send, Grid, Download, Edit3 } from 'lucide-react';
+import { Loader2, Grid, Download, Edit3, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 
@@ -18,6 +19,7 @@ type ImageOutputProps = {
     altText?: string;
     isLoading: boolean;
     onSendToEdit: (filename: string) => void;
+    onQuickEdit?: (filename: string, editText: string) => void;
     onDownload?: (filename: string, imageUrl: string) => void;
     onContinueEditing?: (filename: string) => void;
     currentMode: 'generate' | 'edit';
@@ -31,40 +33,41 @@ const getGridColsClass = (count: number): string => {
     return 'grid-cols-3';
 };
 
-const EnhancedLoadingPreview = ({ 
-    baseImagePreviewUrl, 
-    currentMode 
-}: { 
-    baseImagePreviewUrl: string | null; 
-    currentMode: 'generate' | 'edit'; 
+const EnhancedLoadingPreview = ({
+    baseImagePreviewUrl,
+    currentMode
+}: {
+    baseImagePreviewUrl: string | null;
+    currentMode: 'generate' | 'edit';
 }) => {
     const [loadingText, setLoadingText] = React.useState('Genererer billede...');
     const [dotCount, setDotCount] = React.useState(0);
-    
+
     React.useEffect(() => {
-        const messages = currentMode === 'edit' 
-            ? ['Redigerer billede...', 'Anvender ændringer...', 'Behandler...', 'Næsten færdig...']
-            : ['Genererer billede...', 'Skaber kunstværk...', 'Behandler...', 'Færdiggør...'];
-        
+        const messages =
+            currentMode === 'edit'
+                ? ['Redigerer billede...', 'Anvender ændringer...', 'Behandler...', 'Næsten færdig...']
+                : ['Genererer billede...', 'Skaber kunstværk...', 'Behandler...', 'Færdiggør...'];
+
         let messageIndex = 0;
         const interval = setInterval(() => {
             messageIndex = (messageIndex + 1) % messages.length;
             setLoadingText(messages[messageIndex]);
         }, 2000);
-        
+
         return () => clearInterval(interval);
     }, [currentMode]);
-    
+
     React.useEffect(() => {
         const interval = setInterval(() => {
-            setDotCount(prev => (prev + 1) % 4);
+            setDotCount((prev) => (prev + 1) % 4);
         }, 500);
-        
+
         return () => clearInterval(interval);
     }, []);
-    
+
     const dots = '.'.repeat(dotCount);
-    
+
     if (currentMode === 'edit' && baseImagePreviewUrl) {
         return (
             <div className='relative flex h-full w-full items-center justify-center'>
@@ -82,7 +85,10 @@ const EnhancedLoadingPreview = ({
                         <div className='absolute inset-0 h-12 w-12 animate-pulse rounded-full border-2 border-white/20'></div>
                     </div>
                     <div className='text-center'>
-                        <p className='text-lg font-medium'>{loadingText}{dots}</p>
+                        <p className='text-lg font-medium'>
+                            {loadingText}
+                            {dots}
+                        </p>
                         <p className='mt-1 text-sm text-white/70'>This may take up to 2 minutes</p>
                     </div>
                     <div className='mt-4 h-1 w-48 overflow-hidden rounded-full bg-white/20'>
@@ -92,7 +98,7 @@ const EnhancedLoadingPreview = ({
             </div>
         );
     }
-    
+
     return (
         <div className='flex flex-col items-center justify-center text-white/80'>
             <div className='relative mb-4'>
@@ -100,7 +106,10 @@ const EnhancedLoadingPreview = ({
                 <div className='absolute inset-0 h-12 w-12 animate-pulse rounded-full border-2 border-white/20'></div>
             </div>
             <div className='text-center'>
-                <p className='text-lg font-medium'>{loadingText}{dots}</p>
+                <p className='text-lg font-medium'>
+                    {loadingText}
+                    {dots}
+                </p>
                 <p className='mt-1 text-sm text-white/60'>This may take up to 2 minutes</p>
             </div>
             <div className='mt-4 h-1 w-48 overflow-hidden rounded-full bg-white/20'>
@@ -117,15 +126,42 @@ export function ImageOutput({
     altText = 'Generated image output',
     isLoading,
     onSendToEdit,
+    onQuickEdit,
     onDownload,
     onContinueEditing,
     currentMode,
     baseImagePreviewUrl
 }: ImageOutputProps) {
-    const handleSendClick = () => {
-        // Send to edit only works when a single image is selected
-        if (typeof viewMode === 'number' && imageBatch && imageBatch[viewMode]) {
-            onSendToEdit(imageBatch[viewMode].filename);
+    const [quickEditText, setQuickEditText] = React.useState('');
+    const [isQuickEditing, setIsQuickEditing] = React.useState(false);
+    // handleSendClick removed - replaced with quick edit functionality
+
+    const handleQuickEditSubmit = async () => {
+        if (
+            !quickEditText.trim() ||
+            !onQuickEdit ||
+            typeof viewMode !== 'number' ||
+            !imageBatch ||
+            !imageBatch[viewMode]
+        ) {
+            return;
+        }
+
+        setIsQuickEditing(true);
+        try {
+            await onQuickEdit(imageBatch[viewMode].filename, quickEditText);
+            setQuickEditText('');
+        } catch (error) {
+            console.error('Quick edit failed:', error);
+        } finally {
+            setIsQuickEditing(false);
+        }
+    };
+
+    const handleQuickEditKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleQuickEditSubmit();
         }
     };
 
@@ -145,14 +181,15 @@ export function ImageOutput({
     const isSingleImageView = typeof viewMode === 'number';
     const canSendToEdit = !isLoading && isSingleImageView && imageBatch && imageBatch[viewMode];
 
+    // Show quick edit field when image is ready and not in grid view
+    const showQuickEdit =
+        !isLoading && typeof viewMode === 'number' && imageBatch && imageBatch[viewMode] && onQuickEdit;
+
     return (
         <div className='flex h-full min-h-[300px] w-full flex-col items-center justify-between gap-4 overflow-hidden rounded-lg border border-white/20 bg-black p-4'>
             <div className='relative flex h-full w-full flex-grow items-center justify-center overflow-hidden'>
                 {isLoading ? (
-                    <EnhancedLoadingPreview 
-                        baseImagePreviewUrl={baseImagePreviewUrl}
-                        currentMode={currentMode}
-                    />
+                    <EnhancedLoadingPreview baseImagePreviewUrl={baseImagePreviewUrl} currentMode={currentMode} />
                 ) : imageBatch && imageBatch.length > 0 ? (
                     viewMode === 'grid' ? (
                         <div
@@ -173,14 +210,55 @@ export function ImageOutput({
                             ))}
                         </div>
                     ) : imageBatch[viewMode] ? (
-                        <Image
-                            src={imageBatch[viewMode].path}
-                            alt={altText}
-                            width={512}
-                            height={512}
-                            className='max-h-full max-w-full object-contain'
-                            unoptimized
-                        />
+                        <div className='flex h-full w-full flex-col'>
+                            {/* Image Display - Full Width */}
+                            <div className='flex flex-1 items-center justify-center'>
+                                <Image
+                                    src={imageBatch[viewMode].path}
+                                    alt={altText}
+                                    width={512}
+                                    height={512}
+                                    className='max-h-full max-w-full object-contain'
+                                    unoptimized
+                                />
+                            </div>
+
+                            {/* Quick Edit Panel - Below Image */}
+                            {showQuickEdit && (
+                                <div className='mt-4 flex w-full flex-col space-y-3 rounded-lg border border-white/10 bg-neutral-900/50 p-4'>
+                                    <div className='flex items-center justify-between'>
+                                        <div>
+                                            <h3 className='text-sm font-medium text-white/90'>Hurtig redigering</h3>
+                                            <p className='text-xs text-white/60'>
+                                                Beskriv hvordan billedet skal redigeres
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className='flex gap-3'>
+                                        <Input
+                                            value={quickEditText}
+                                            onChange={(e) => setQuickEditText(e.target.value)}
+                                            onKeyPress={handleQuickEditKeyPress}
+                                            placeholder='Beskriv redigeringsanvisninger...'
+                                            disabled={isQuickEditing}
+                                            className='flex-1 border-white/20 bg-black/50 text-white placeholder:text-white/40'
+                                        />
+                                        <Button
+                                            onClick={handleQuickEditSubmit}
+                                            disabled={!quickEditText.trim() || isQuickEditing}
+                                            className='bg-blue-600 text-white hover:bg-blue-700'
+                                            size='sm'>
+                                            {isQuickEditing ? (
+                                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                            ) : (
+                                                <Sparkles className='mr-2 h-4 w-4' />
+                                            )}
+                                            {isQuickEditing ? 'Redigerer...' : 'Start redigering'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <div className='text-center text-white/40'>
                             <p>Error displaying image.</p>
@@ -235,10 +313,11 @@ export function ImageOutput({
                     </div>
                 )}
 
-                <div className={cn(
-                    'flex items-center gap-2',
-                    showCarousel && viewMode === 'grid' ? 'invisible' : 'visible'
-                )}>
+                <div
+                    className={cn(
+                        'flex items-center gap-2',
+                        showCarousel && viewMode === 'grid' ? 'invisible' : 'visible'
+                    )}>
                     {onDownload && (
                         <Button
                             variant='outline'
@@ -250,7 +329,7 @@ export function ImageOutput({
                             Download
                         </Button>
                     )}
-                    
+
                     {onContinueEditing && (
                         <Button
                             variant='outline'
@@ -263,15 +342,7 @@ export function ImageOutput({
                         </Button>
                     )}
 
-                    <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={handleSendClick}
-                        disabled={!canSendToEdit}
-                        className='shrink-0 border-white/20 text-white/80 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-50'>
-                        <Send className='mr-2 h-4 w-4' />
-                        Send til redigering
-                    </Button>
+                    {/* Send til redigering button removed - replaced with quick edit panel */}
                 </div>
             </div>
         </div>

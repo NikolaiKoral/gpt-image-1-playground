@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
 import { blobManager } from '@/lib/blob-manager';
 import { ImageCompressor } from '@/lib/image-compression';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface ImageFile {
     file: File;
@@ -48,13 +48,14 @@ export function useOptimizedImages(options: UseOptimizedImagesOptions = {}) {
 
         while (processingQueue.current.length > 0) {
             const file = processingQueue.current.shift()!;
-            
+
             try {
                 let finalFile = file;
                 let compressed = false;
 
                 // Compress if needed and enabled
-                if (autoCompress && file.size > 1024 * 1024) { // > 1MB
+                if (autoCompress && file.size > 1024 * 1024) {
+                    // > 1MB
                     try {
                         finalFile = await ImageCompressor.compressImage(file, compressionOptions);
                         compressed = true;
@@ -67,7 +68,7 @@ export function useOptimizedImages(options: UseOptimizedImagesOptions = {}) {
 
                 // Create optimized preview URL
                 const previewUrl = blobManager.createUrl(finalFile, `${file.name}-${Date.now()}`);
-                
+
                 const imageFile: ImageFile = {
                     file: finalFile,
                     previewUrl,
@@ -75,14 +76,13 @@ export function useOptimizedImages(options: UseOptimizedImagesOptions = {}) {
                     compressed
                 };
 
-                setImages(prev => {
+                setImages((prev) => {
                     // Check if we're at max capacity
                     if (prev.length >= maxImages) {
                         return prev;
                     }
                     return [...prev, imageFile];
                 });
-
             } catch (error) {
                 console.error(`Error processing image ${file.name}:`, error);
             }
@@ -93,17 +93,20 @@ export function useOptimizedImages(options: UseOptimizedImagesOptions = {}) {
     }, [autoCompress, compressionOptions, maxImages]);
 
     // Add images to processing queue
-    const addImages = useCallback((newFiles: File[]) => {
-        const availableSlots = maxImages - images.length;
-        const filesToAdd = newFiles.slice(0, availableSlots);
-        
-        processingQueue.current.push(...filesToAdd);
-        processQueue();
-    }, [images.length, maxImages, processQueue]);
+    const addImages = useCallback(
+        (newFiles: File[]) => {
+            const availableSlots = maxImages - images.length;
+            const filesToAdd = newFiles.slice(0, availableSlots);
+
+            processingQueue.current.push(...filesToAdd);
+            processQueue();
+        },
+        [images.length, maxImages, processQueue]
+    );
 
     // Remove image with proper cleanup
     const removeImage = useCallback((indexToRemove: number) => {
-        setImages(prev => {
+        setImages((prev) => {
             const imageToRemove = prev[indexToRemove];
             if (imageToRemove?.previewUrl) {
                 blobManager.revokeUrl(imageToRemove.id);
@@ -115,8 +118,8 @@ export function useOptimizedImages(options: UseOptimizedImagesOptions = {}) {
     // Move image position
     const moveImage = useCallback((fromIndex: number, toIndex: number) => {
         if (fromIndex === toIndex) return;
-        
-        setImages(prev => {
+
+        setImages((prev) => {
             const newImages = [...prev];
             const [movedImage] = newImages.splice(fromIndex, 1);
             newImages.splice(toIndex, 0, movedImage);
@@ -127,12 +130,12 @@ export function useOptimizedImages(options: UseOptimizedImagesOptions = {}) {
     // Clear all images
     const clearImages = useCallback(() => {
         // Cleanup all blob URLs
-        images.forEach(image => {
+        images.forEach((image) => {
             if (image.previewUrl) {
                 blobManager.revokeUrl(image.id);
             }
         });
-        
+
         setImages([]);
         processingQueue.current = [];
     }, [images]);
@@ -144,7 +147,7 @@ export function useOptimizedImages(options: UseOptimizedImagesOptions = {}) {
 
     // Get compression statistics
     const getCompressionStats = useCallback(() => {
-        const compressed = images.filter(img => img.compressed).length;
+        const compressed = images.filter((img) => img.compressed).length;
         return {
             totalImages: images.length,
             compressedImages: compressed,

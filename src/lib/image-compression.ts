@@ -24,20 +24,12 @@ export class ImageCompressor {
     /**
      * Compress an image file for optimal processing
      */
-    static async compressImage(
-        file: File, 
-        options: CompressionOptions = {}
-    ): Promise<File> {
-        const {
-            maxWidth = 2048,
-            maxHeight = 2048,
-            quality = 0.8,
-            format = 'jpeg'
-        } = options;
+    static async compressImage(file: File, options: CompressionOptions = {}): Promise<File> {
+        const { maxWidth = 2048, maxHeight = 2048, quality = 0.8, format = 'jpeg' } = options;
 
         return new Promise((resolve, reject) => {
             const img = new Image();
-            
+
             img.onload = () => {
                 try {
                     const canvas = this.getCanvas();
@@ -45,7 +37,7 @@ export class ImageCompressor {
 
                     // Calculate new dimensions
                     let { width, height } = img;
-                    
+
                     if (width > maxWidth || height > maxHeight) {
                         const ratio = Math.max(width / maxWidth, height / maxHeight);
                         width = Math.floor(width / ratio);
@@ -63,11 +55,9 @@ export class ImageCompressor {
                     canvas.toBlob(
                         (blob) => {
                             if (blob) {
-                                const compressedFile = new File(
-                                    [blob], 
-                                    file.name.replace(/\.[^/.]+$/, `.${format}`),
-                                    { type: `image/${format}` }
-                                );
+                                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, `.${format}`), {
+                                    type: `image/${format}`
+                                });
                                 resolve(compressedFile);
                             } else {
                                 reject(new Error('Compression failed'));
@@ -95,17 +85,17 @@ export class ImageCompressor {
     static getImageDimensions(file: File): Promise<{ width: number; height: number }> {
         return new Promise((resolve, reject) => {
             const img = new Image();
-            
+
             img.onload = () => {
                 resolve({ width: img.width, height: img.height });
                 URL.revokeObjectURL(img.src);
             };
-            
+
             img.onerror = () => {
                 URL.revokeObjectURL(img.src);
                 reject(new Error('Failed to load image'));
             };
-            
+
             img.src = URL.createObjectURL(file);
         });
     }
@@ -113,17 +103,14 @@ export class ImageCompressor {
     /**
      * Create thumbnail for preview
      */
-    static async createThumbnail(
-        file: File, 
-        size: number = 150
-    ): Promise<string> {
+    static async createThumbnail(file: File, size: number = 150): Promise<string> {
         const compressed = await this.compressImage(file, {
             maxWidth: size,
             maxHeight: size,
             quality: 0.7,
             format: 'jpeg'
         });
-        
+
         return URL.createObjectURL(compressed);
     }
 }

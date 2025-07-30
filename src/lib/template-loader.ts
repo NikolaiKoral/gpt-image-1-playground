@@ -49,23 +49,23 @@ class TemplateLoader {
             case 'still-life':
                 const { stillLifeTemplates } = await import('@/lib/templates/still-life');
                 return stillLifeTemplates;
-            
+
             case 'lifestyle':
                 const { lifestyleTemplates } = await import('@/lib/templates/lifestyle');
                 return lifestyleTemplates;
-            
+
             case 'technical':
                 const { technicalTemplates } = await import('@/lib/templates/technical');
                 return technicalTemplates;
-            
+
             case 'action':
                 const { actionTemplates } = await import('@/lib/templates/action');
                 return actionTemplates;
-            
+
             case 'specialized':
                 const { specializedTemplates } = await import('@/lib/templates/specialized');
                 return specializedTemplates;
-            
+
             default:
                 throw new Error(`Unknown template group: ${group}`);
         }
@@ -76,11 +76,9 @@ class TemplateLoader {
      */
     async preloadAllTemplates(): Promise<void> {
         const groups = ['still-life', 'lifestyle', 'technical', 'action', 'specialized'];
-        
+
         // Load all groups in parallel
-        await Promise.allSettled(
-            groups.map(group => this.loadTemplateGroup(group))
-        );
+        await Promise.allSettled(groups.map((group) => this.loadTemplateGroup(group)));
     }
 
     /**
@@ -100,11 +98,12 @@ class TemplateLoader {
     searchLoadedTemplates(query: string): PromptTemplate[] {
         const searchTerm = query.toLowerCase();
         const allTemplates = this.getAllLoadedTemplates();
-        
-        return allTemplates.filter(template => 
-            template.name.toLowerCase().includes(searchTerm) ||
-            template.description.toLowerCase().includes(searchTerm) ||
-            template.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+
+        return allTemplates.filter(
+            (template) =>
+                template.name.toLowerCase().includes(searchTerm) ||
+                template.description.toLowerCase().includes(searchTerm) ||
+                template.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
         );
     }
 
@@ -125,5 +124,5 @@ export const TEMPLATE_GROUPS = [
     { id: 'lifestyle', name: 'Lifestyle', count: 5 },
     { id: 'technical', name: 'Technical', count: 5 },
     { id: 'action', name: 'Action', count: 5 },
-    { id: 'specialized', name: 'Specialized', count: 5 },
+    { id: 'specialized', name: 'Specialized', count: 5 }
 ] as const;

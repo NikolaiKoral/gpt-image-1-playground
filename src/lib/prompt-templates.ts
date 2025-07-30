@@ -1,9 +1,9 @@
-import { PromptTemplate, TemplateCategory, MoodboardPreset } from '@/types/templates';
-import { stillLifeTemplates } from './templates/still-life';
-import { lifestyleTemplates } from './templates/lifestyle';
-import { technicalTemplates } from './templates/technical';
 import { actionTemplates } from './templates/action';
+import { lifestyleTemplates } from './templates/lifestyle';
 import { specializedTemplates } from './templates/specialized';
+import { stillLifeTemplates } from './templates/still-life';
+import { technicalTemplates } from './templates/technical';
+import { PromptTemplate, TemplateCategory, MoodboardPreset } from '@/types/templates';
 
 export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
     {
@@ -16,11 +16,11 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
 
 // Combine all template chunks into the main template array (25 total)
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
-    ...stillLifeTemplates,     // 5 templates
-    ...lifestyleTemplates,     // 5 templates  
-    ...technicalTemplates,     // 5 templates
-    ...actionTemplates,        // 5 templates
-    ...specializedTemplates    // 5 templates
+    ...stillLifeTemplates, // 5 templates
+    ...lifestyleTemplates, // 5 templates
+    ...technicalTemplates, // 5 templates
+    ...actionTemplates, // 5 templates
+    ...specializedTemplates // 5 templates
 ];
 
 export const MOODBOARD_PRESETS: MoodboardPreset[] = [
@@ -37,15 +37,7 @@ export const MOODBOARD_PRESETS: MoodboardPreset[] = [
         promptModifiers: {
             prefix: 'Scandinavian design aesthetic,',
             suffix: ', light wood tones, natural lighting, minimal composition, Nordic style',
-            styleKeywords: [
-                'scandinavian',
-                'minimal',
-                'natural light',
-                'light wood',
-                'clean lines',
-                'nordic',
-                'hygge'
-            ]
+            styleKeywords: ['scandinavian', 'minimal', 'natural light', 'light wood', 'clean lines', 'nordic', 'hygge']
         },
         tags: ['minimal', 'natural', 'light', 'clean']
     },
@@ -62,15 +54,7 @@ export const MOODBOARD_PRESETS: MoodboardPreset[] = [
         promptModifiers: {
             prefix: 'Urban industrial setting,',
             suffix: ', concrete textures, metal accents, dramatic shadows, raw materials, loft atmosphere',
-            styleKeywords: [
-                'industrial',
-                'urban',
-                'concrete',
-                'metal',
-                'dramatic lighting',
-                'raw',
-                'loft'
-            ]
+            styleKeywords: ['industrial', 'urban', 'concrete', 'metal', 'dramatic lighting', 'raw', 'loft']
         },
         tags: ['industrial', 'urban', 'dramatic', 'raw']
     },
@@ -87,15 +71,7 @@ export const MOODBOARD_PRESETS: MoodboardPreset[] = [
         promptModifiers: {
             prefix: 'Minimalist composition,',
             suffix: ', negative space, pure simplicity, essential elements only, clean background',
-            styleKeywords: [
-                'minimalist',
-                'simple',
-                'negative space',
-                'clean',
-                'pure',
-                'essential',
-                'uncluttered'
-            ]
+            styleKeywords: ['minimalist', 'simple', 'negative space', 'clean', 'pure', 'essential', 'uncluttered']
         },
         tags: ['minimal', 'simple', 'clean', 'space']
     },
@@ -112,15 +88,7 @@ export const MOODBOARD_PRESETS: MoodboardPreset[] = [
         promptModifiers: {
             prefix: 'Surreal artistic composition,',
             suffix: ', dreamlike atmosphere, unusual perspective, creative interpretation, artistic vision',
-            styleKeywords: [
-                'surreal',
-                'dreamlike',
-                'artistic',
-                'unusual',
-                'creative',
-                'imaginative',
-                'abstract'
-            ]
+            styleKeywords: ['surreal', 'dreamlike', 'artistic', 'unusual', 'creative', 'imaginative', 'abstract']
         },
         tags: ['surreal', 'artistic', 'creative', 'dreamlike']
     },
@@ -137,15 +105,7 @@ export const MOODBOARD_PRESETS: MoodboardPreset[] = [
         promptModifiers: {
             prefix: 'Luxury elegant styling,',
             suffix: ', premium materials, sophisticated composition, refined aesthetics, high-end presentation',
-            styleKeywords: [
-                'luxury',
-                'elegant',
-                'sophisticated',
-                'premium',
-                'refined',
-                'high-end',
-                'exclusive'
-            ]
+            styleKeywords: ['luxury', 'elegant', 'sophisticated', 'premium', 'refined', 'high-end', 'exclusive']
         },
         tags: ['luxury', 'elegant', 'sophisticated', 'premium']
     },
@@ -178,32 +138,31 @@ export const MOODBOARD_PRESETS: MoodboardPreset[] = [
 
 export function processTemplate(template: PromptTemplate, variables: Record<string, string>): string {
     let processedPrompt = template.template;
-    
+
     // Replace variables in the template
-    template.variables.forEach(variable => {
+    template.variables.forEach((variable) => {
         const value = variables[variable.name] || variable.defaultValue || '';
         const placeholder = `{${variable.name}}`;
         processedPrompt = processedPrompt.replace(new RegExp(placeholder, 'g'), value);
     });
-    
+
     return processedPrompt;
 }
 
 export function getTemplatesByCategory(categoryId: string): PromptTemplate[] {
-    return PROMPT_TEMPLATES.filter(template => template.category === categoryId);
+    return PROMPT_TEMPLATES.filter((template) => template.category === categoryId);
 }
 
 export function searchTemplates(query: string): PromptTemplate[] {
     const searchTerm = query.toLowerCase();
-    return PROMPT_TEMPLATES.filter(template => 
-        template.name.toLowerCase().includes(searchTerm) ||
-        template.description.toLowerCase().includes(searchTerm) ||
-        template.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+    return PROMPT_TEMPLATES.filter(
+        (template) =>
+            template.name.toLowerCase().includes(searchTerm) ||
+            template.description.toLowerCase().includes(searchTerm) ||
+            template.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
     );
 }
 
 export function getPresetsByTags(tags: string[]): MoodboardPreset[] {
-    return MOODBOARD_PRESETS.filter(preset =>
-        preset.tags.some(tag => tags.includes(tag))
-    );
+    return MOODBOARD_PRESETS.filter((preset) => preset.tags.some((tag) => tags.includes(tag)));
 }

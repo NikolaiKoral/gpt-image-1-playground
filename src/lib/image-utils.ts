@@ -26,13 +26,7 @@ export async function fileToBase64(file: File): Promise<string> {
  * Check if file is a supported image format for Gemini API
  */
 export function isSupportedImageFormat(file: File): boolean {
-    const supportedTypes = [
-        'image/jpeg',
-        'image/jpg', 
-        'image/png',
-        'image/webp',
-        'image/gif'
-    ];
+    const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     return supportedTypes.includes(file.type.toLowerCase());
 }
 
@@ -42,7 +36,7 @@ export function isSupportedImageFormat(file: File): boolean {
 export function getImageMimeType(file: File): string {
     // Normalize MIME type for Gemini API
     const mimeType = file.type.toLowerCase();
-    
+
     // Gemini API expects specific MIME types
     switch (mimeType) {
         case 'image/jpg':

@@ -149,7 +149,7 @@ export function GenerationForm({
                         )}
                     </div>
                     <CardDescription className='mt-1 text-white/60'>
-Opret et nyt billede fra en tekst prompt ved hjælp af gpt-image-1.
+                        Opret et nyt billede fra en tekst prompt ved hjælp af gpt-image-1.
                     </CardDescription>
                 </div>
                 <ModeToggle currentMode={currentMode} onModeChange={onModeChange} />
