@@ -493,13 +493,25 @@ export function PromptTemplateSelector({ value, onChange, className, imageFiles 
                                         disabled={isRefining || !customPromptText.trim()}
                                         title={
                                             imageFiles && imageFiles.length > 0
-                                                ? 'Analyser billede og forbedr prompt med AI'
+                                                ? selectedTags.length > 0
+                                                    ? `Analyser billede og forbedr prompt med AI (inkl. ${selectedTags.length} valgte tags)`
+                                                    : 'Analyser billede og forbedr prompt med AI'
+                                                : selectedTags.length > 0
+                                                ? `Forbedr prompt med AI (inkl. ${selectedTags.length} valgte tags)`
                                                 : 'Forbedr prompt med AI'
                                         }>
                                         {isRefining ? (
                                             <Loader2 className='h-4 w-4 animate-spin text-blue-600' />
                                         ) : (
-                                            <Sparkles className='h-4 w-4 text-blue-600' />
+                                            <div className='relative'>
+                                                <Sparkles className='h-4 w-4 text-blue-600' />
+                                                {selectedTags.length > 0 && (
+                                                    <span className='absolute -top-1 -right-1 flex h-2 w-2'>
+                                                        <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75'></span>
+                                                        <span className='relative inline-flex rounded-full h-2 w-2 bg-blue-500'></span>
+                                                    </span>
+                                                )}
+                                            </div>
                                         )}
                                     </Button>
                                 </div>
@@ -508,12 +520,20 @@ export function PromptTemplateSelector({ value, onChange, className, imageFiles 
                                 )}
                             </div>
 
-                            <PromptTagSelector
-                                selectedTags={selectedTags}
-                                onTagsChange={handleTagsChange}
-                                maxTags={15}
-                                showConflicts={true}
-                            />
+                            <div className='space-y-2'>
+                                <PromptTagSelector
+                                    selectedTags={selectedTags}
+                                    onTagsChange={handleTagsChange}
+                                    maxTags={15}
+                                    showConflicts={true}
+                                />
+                                {selectedTags.length > 0 && (
+                                    <p className='text-xs text-muted-foreground flex items-center gap-1'>
+                                        <Sparkles className='h-3 w-3' />
+                                        Valgte tags vil blive inkluderet når du bruger AI-forbedring
+                                    </p>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
