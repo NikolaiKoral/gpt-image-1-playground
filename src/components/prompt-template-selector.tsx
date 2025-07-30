@@ -1,6 +1,7 @@
 'use client';
 
 import { PromptTagSelector } from '@/components/prompt-tag-selector';
+import { StyleAnalyzer } from '@/components/style-analyzer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,8 @@ import {
     Copy,
     Check,
     ArrowRight,
-    Loader2
+    Loader2,
+    Image as ImageIcon
 } from 'lucide-react';
 import * as React from 'react';
 
@@ -190,6 +192,14 @@ export function PromptTemplateSelector({ value, onChange, className, imageFiles 
         }
     };
 
+    const handleStylePromptApply = (stylePrompt: string) => {
+        setCustomPromptText(stylePrompt);
+        setActiveTab('custom');
+        // Show feedback
+        setTransferredTemplate('Stilanalyse');
+        setTimeout(() => setTransferredTemplate(null), 3000);
+    };
+
     const filteredTemplates = searchQuery ? searchTemplates(searchQuery) : PROMPT_TEMPLATES;
 
     const processedPrompt =
@@ -207,14 +217,21 @@ export function PromptTemplateSelector({ value, onChange, className, imageFiles 
     return (
         <div className={cn('space-y-4', className)}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-                <TabsList className='grid w-full grid-cols-2'>
+                <TabsList className='grid w-full grid-cols-3'>
                     <TabsTrigger value='browse' className='flex items-center gap-2'>
                         <Sparkles className='h-4 w-4' />
-                        Gennemse templates
+                        <span className='hidden sm:inline'>Gennemse templates</span>
+                        <span className='sm:hidden'>Templates</span>
                     </TabsTrigger>
                     <TabsTrigger value='custom' className='flex items-center gap-2'>
                         <Wand2 className='h-4 w-4' />
-                        Brugerdefineret prompt
+                        <span className='hidden sm:inline'>Brugerdefineret prompt</span>
+                        <span className='sm:hidden'>Prompt</span>
+                    </TabsTrigger>
+                    <TabsTrigger value='style' className='flex items-center gap-2'>
+                        <ImageIcon className='h-4 w-4' />
+                        <span className='hidden sm:inline'>Stil inspiration</span>
+                        <span className='sm:hidden'>Stil</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -536,6 +553,10 @@ export function PromptTemplateSelector({ value, onChange, className, imageFiles 
                             </div>
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                <TabsContent value='style' className='space-y-4'>
+                    <StyleAnalyzer onApplyPrompt={handleStylePromptApply} />
                 </TabsContent>
             </Tabs>
 
