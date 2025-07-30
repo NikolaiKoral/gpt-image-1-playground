@@ -18,6 +18,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 # Increase Node.js memory limit for build
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Set storage mode for Fly.io deployment - must be at build time for NEXT_PUBLIC vars
+ENV NEXT_PUBLIC_IMAGE_STORAGE_MODE=indexeddb
 
 # Build the application
 RUN npm run build
