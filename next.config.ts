@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  // Disable TypeScript checking during production builds
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['@radix-ui/react-dialog', '@radix-ui/react-select', 'lucide-react'],

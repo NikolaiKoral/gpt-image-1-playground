@@ -53,7 +53,7 @@ Original prompt: "${prompt}"
 Svar kun med den forbedrede prompt på dansk - ingen forklaringer:`;
 
         // Build content parts for multimodal input
-        const contentParts = [{ text: systemPrompt }];
+        const contentParts: any[] = [{ text: systemPrompt }];
 
         // Add image if provided
         if (imageData) {
