@@ -184,7 +184,7 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
                         Stil Inspiration
                     </CardTitle>
                     <CardDescription>
-                        Upload billeder eller PDF-dokumenter for at analysere deres visuelle stil (maks 20MB pr. fil)
+                        Upload billeder eller PDF-magasiner/kataloger for at analysere deres fotografiske stil (maks 20MB pr. fil)
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -205,7 +205,7 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
                             className="w-full"
                         >
                             <Upload className="mr-2 h-4 w-4" />
-                            Vælg billeder eller PDF-filer
+                            Vælg billeder eller PDF-magasiner
                         </Button>
                     </div>
 

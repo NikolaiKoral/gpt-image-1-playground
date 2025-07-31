@@ -17,7 +17,52 @@ export async function POST(request: NextRequest) {
 
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
-        const systemPrompt = `Du er en ekspert visuel analytiker med speciale i at identificere og beskrive visuelle stilarter fra både billeder og PDF-dokumenter. Analyser de uploadede filer og giv en detaljeret beskrivelse af den visuelle stil.
+        // Check if any files are PDFs
+        const hasPdf = files.some((file: { mimeType: string }) => file.mimeType === 'application/pdf');
+
+        const systemPrompt = hasPdf 
+            ? `Du er en ekspert magasin- og kataloganalytiker med speciale i at udtrække genbrugelige fotografiske stilarter fra publikationer. Analyser det uploadede magasin/katalog og identificer de konsistente visuelle mønstre der kan bruges som fundament for nye produktserier.
+
+Fokusér på at finde GENTAGENDE stilistiske elementer på tværs af siderne - ikke enkeltstående billeder. Se efter:
+
+1. **Belysning** (konsistente lysopsætninger):
+   - Typiske lyssetups brugt gennem publikationen
+   - Foretrukne lysretninger og -kvaliteter
+   - Signatur-lysteknikker der går igen
+   - Balance mellem hoved- og fyldlys
+
+2. **Komposition & Indramning** (genbrugelige mønstre):
+   - Standard kameravinkler og perspektiver
+   - Typiske produktplaceringer i rammen
+   - Konsistente kompositionsregler
+   - Foretrukne beskæringer og formater
+
+3. **Farver & Stemning** (brand-identitet):
+   - Gennemgående farvepalette
+   - Konsistent farvegrading
+   - Stemning og atmosfære gennem publikationen
+   - Farvetemperatur tendenser
+
+4. **Tekniske Standarder** (produktionsstil):
+   - Typisk dybdeskarphed og fokusteknik
+   - Foretrukne brændvidder til forskellige produkttyper
+   - Konsistent billedkvalitet og skarphed
+   - Tekniske signaturer
+
+5. **Styling & Opsætning** (produktionselementer):
+   - Genbrugelige baggrunde og miljøer
+   - Typiske rekvisitter og deres anvendelse
+   - Konsistente stylingprincipper
+   - Produktpræsentationsmønstre
+
+6. **Overordnet Stil** (visuelt DNA):
+   - Publikationens fotografiske signatur
+   - Hvad gør denne stil genkendelig
+   - Produktionsniveau og finish
+   - Målgruppe og æstetik
+
+Giv konkrete, handlingsrettede indsigter som en fotograf kan bruge til at skabe nye billeder i samme stil.`
+            : `Du er en ekspert visuel analytiker med speciale i at identificere og beskrive visuelle stilarter fra billeder. Analyser de uploadede billeder og giv en detaljeret beskrivelse af den fotografiske stil.
 
 Analyser følgende aspekter:
 
@@ -88,8 +133,15 @@ Formatér dit svar som struktureret JSON med følgende format:
 
 Svar KUN med JSON-objektet på dansk, ingen yderligere tekst.`;
 
+        // Adjust the final prompt suggestion format for PDFs
+        const finalSystemPrompt = hasPdf 
+            ? systemPrompt + `
+
+VIGTIGT: promptSuggestion skal være en prompt der kan bruges til at skabe NYE produktbilleder i samme stil som magasinet - ikke en beskrivelse af magasinet selv. Fokusér på genbrugelige stilistiske elementer.`
+            : systemPrompt;
+
         // Build content parts for multimodal input
-        const contentParts: any[] = [{ text: systemPrompt }];
+        const contentParts: any[] = [{ text: finalSystemPrompt }];
 
         // Add all files with their proper mime types
         files.forEach((fileData: { base64: string; mimeType: string }) => {
