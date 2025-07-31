@@ -97,13 +97,34 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No images provided for video generation' }, { status: 400 });
         }
 
+        // Helper function to ensure URLs are absolute HTTPS
+        const ensureAbsoluteHttpsUrl = (url: string): string => {
+            // If it's a data URI, return as-is
+            if (url.startsWith('data:')) {
+                return url;
+            }
+            
+            // If it's a relative URL, make it absolute
+            if (url.startsWith('/')) {
+                // Use the production URL for Fly.io deployment
+                return `https://gpt-image-1-playground.fly.dev${url}`;
+            }
+            
+            // If it's already an absolute URL, ensure it's HTTPS
+            if (url.startsWith('http://')) {
+                return url.replace('http://', 'https://');
+            }
+            
+            return url;
+        };
+
         // Prepare images for Runway API
         let promptImage: string | Array<{ uri: string; position: 'first' | 'last' }>;
 
         if (imageSources.length === 1) {
             const source = imageSources[0];
             if (source.url) {
-                promptImage = source.url;
+                promptImage = ensureAbsoluteHttpsUrl(source.url);
             } else if (source.file) {
                 // Convert file to data URI
                 const buffer = Buffer.from(await source.file.arrayBuffer());
@@ -121,7 +142,7 @@ export async function POST(request: NextRequest) {
                 let uri: string;
                 
                 if (source.url) {
-                    uri = source.url;
+                    uri = ensureAbsoluteHttpsUrl(source.url);
                 } else if (source.file) {
                     const buffer = Buffer.from(await source.file.arrayBuffer());
                     const base64 = buffer.toString('base64');
