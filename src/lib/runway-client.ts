@@ -6,11 +6,11 @@ let runwayClient: RunwayML | null = null;
 
 function getRunwayClient(): RunwayML {
     if (!runwayClient) {
-        if (!process.env.RUNWAY_API_KEY) {
-            throw new Error('RUNWAY_API_KEY is not configured');
+        if (!process.env.RUNWAYML_API_SECRET) {
+            throw new Error('RUNWAYML_API_SECRET is not configured');
         }
         runwayClient = new RunwayML({
-            apiKey: process.env.RUNWAY_API_KEY,
+            apiKey: process.env.RUNWAYML_API_SECRET,
         });
     }
     return runwayClient;
