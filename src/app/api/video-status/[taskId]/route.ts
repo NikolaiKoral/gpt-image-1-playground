@@ -14,8 +14,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
 
-    if (!process.env.RUNWAY_API_KEY) {
-        console.error('RUNWAY_API_KEY is not set.');
+    if (!process.env.RUNWAYML_API_SECRET) {
+        console.error('RUNWAYML_API_SECRET is not set.');
         return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
@@ -76,8 +76,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
 
-    if (!process.env.RUNWAY_API_KEY) {
-        console.error('RUNWAY_API_KEY is not set.');
+    if (!process.env.RUNWAYML_API_SECRET) {
+        console.error('RUNWAYML_API_SECRET is not set.');
         return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 

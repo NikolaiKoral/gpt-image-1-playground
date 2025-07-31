@@ -10,8 +10,8 @@ function sha256(data: string): string {
 export async function POST(request: NextRequest) {
     console.log('Received POST request to /api/video-generate');
 
-    if (!process.env.RUNWAY_API_KEY) {
-        console.error('RUNWAY_API_KEY is not set.');
+    if (!process.env.RUNWAYML_API_SECRET) {
+        console.error('RUNWAYML_API_SECRET is not set.');
         return NextResponse.json({ error: 'Server configuration error: Runway API key not found.' }, { status: 500 });
     }
 
