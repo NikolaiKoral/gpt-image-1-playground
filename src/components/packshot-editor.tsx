@@ -39,6 +39,8 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
     const [error, setError] = React.useState<string | null>(null);
     const [removeBackground, setRemoveBackground] = React.useState(true);
     const [frameSize, setFrameSize] = React.useState(800);
+    const [isPngFormat, setIsPngFormat] = React.useState(true);
+    const [selectedImages, setSelectedImages] = React.useState<string[]>([]);
 
     // Handle file upload
     const handleFilesAdded = (files: File[]) => {
@@ -82,8 +84,17 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
             }
 
             // Process images
-            setProgressText('Behandler billeder...');
+            setProgressText(`Behandler ${inputImages.length} billede${inputImages.length !== 1 ? 'r' : ''}...`);
             setProgress(30);
+
+            if (removeBackground) {
+                setProgressText('Fjerner baggrunde med Remove.bg...');
+                setProgress(50);
+            }
+
+            // Add AbortController for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
             const processResponse = await fetch('/api/image-edit/packshot/process', {
                 method: 'POST',
@@ -95,14 +106,24 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
                     frameSize,
                     passwordHash: clientPasswordHash,
                 }),
+                signal: controller.signal,
             });
 
-            if (!processResponse.ok) {
-                const errorData = await processResponse.json();
-                throw new Error(errorData.error || 'Behandling fejlede');
-            }
+            clearTimeout(timeoutId);
 
             const result = await processResponse.json();
+
+            if (!processResponse.ok) {
+                throw new Error(result.error || 'Behandling fejlede');
+            }
+
+            setProgress(90);
+            setProgressText(`Behandlet ${result.success || 0} af ${inputImages.length} billeder`);
+
+            if (result.failed > 0) {
+                setError(`${result.failed} billede${result.failed !== 1 ? 'r' : ''} kunne ikke behandles`);
+            }
+
             setProgress(100);
             setProgressText('Færdig!');
             
@@ -111,7 +132,15 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
 
         } catch (err) {
             console.error('Error processing images:', err);
-            setError(err instanceof Error ? err.message : 'Ukendt fejl opstod');
+            if (err instanceof Error) {
+                if (err.name === 'AbortError') {
+                    setError('Behandling tog for lang tid (timeout efter 60 sekunder)');
+                } else {
+                    setError(err.message);
+                }
+            } else {
+                setError('Ukendt fejl opstod');
+            }
         } finally {
             setIsProcessing(false);
             setTimeout(() => {
@@ -187,7 +216,10 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ passwordHash: clientPasswordHash }),
+                body: JSON.stringify({ 
+                    passwordHash: clientPasswordHash,
+                    format: isPngFormat ? 'png' : 'jpg'
+                }),
             });
 
             if (!response.ok) {
@@ -331,14 +363,27 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
                             </CardDescription>
                         </div>
                         {processedImages.length > 0 && (
-                            <Button
-                                onClick={handleDownloadAll}
-                                size='sm'
-                                variant='outline'
-                                className='border-white/20 text-white hover:bg-white/10'>
-                                <Download className='mr-2 h-4 w-4' />
-                                Download alle
-                            </Button>
+                            <div className='flex items-center gap-4'>
+                                <div className='flex items-center gap-2'>
+                                    <Label className='text-sm text-white/60'>Format:</Label>
+                                    <div className='flex items-center gap-2'>
+                                        <Switch
+                                            checked={isPngFormat}
+                                            onCheckedChange={setIsPngFormat}
+                                            className='data-[state=checked]:bg-white data-[state=unchecked]:bg-white/30'
+                                        />
+                                        <span className='text-sm text-white'>{isPngFormat ? 'PNG' : 'JPG'}</span>
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={handleDownloadAll}
+                                    size='sm'
+                                    variant='outline'
+                                    className='border-white/20 text-white hover:bg-white/10'>
+                                    <Download className='mr-2 h-4 w-4' />
+                                    Download alle
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </CardHeader>

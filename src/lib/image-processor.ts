@@ -52,6 +52,9 @@ export async function removeBackground(
                 'X-Api-Key': apiKey,
             },
             responseType: 'arraybuffer',
+            timeout: 30000, // 30 second timeout
+            maxContentLength: 50 * 1024 * 1024, // 50MB max
+            maxBodyLength: 50 * 1024 * 1024, // 50MB max
         });
 
         console.log(`[IMG_PROC_BG_REMOVE_SUCCESS] Background removed successfully for ${originalFilename}`);
