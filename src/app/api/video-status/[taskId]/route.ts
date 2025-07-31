@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTaskStatus, cancelTask } from '@/lib/runway-client';
 
 interface RouteParams {
-    params: {
+    params: Promise<{
         taskId: string;
-    };
+    }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
-    const { taskId } = params;
+    const { taskId } = await params;
 
     if (!taskId) {
         return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
@@ -29,7 +29,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             id: task.id,
             status: task.status,
             progress: task.progress,
-            hasOutput: !!task.output
+            hasOutput: !!task.output,
+            output: task.output
         });
 
         // Return task status with appropriate data
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
-    const { taskId } = params;
+    const { taskId } = await params;
 
     if (!taskId) {
         return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });

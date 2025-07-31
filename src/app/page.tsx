@@ -5,6 +5,7 @@ import { EditingForm, type EditingFormData } from '@/components/editing-form';
 import type { GenerationFormData } from '@/components/generation-form';
 // Import type only for compatibility
 import { VideoGenerationForm } from '@/components/video-generation-form';
+import { VideoHistoryPanel } from '@/components/video-history-panel';
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
 // import { MoodboardCenter, type GeneratedImage } from '@/components/moodboard-center'; // Commented out - moodboard disabled
@@ -946,6 +947,54 @@ export default function HomePage() {
         }
     }, []);
 
+    // Handle video deletion
+    const handleVideoDelete = React.useCallback(async (videoId: string) => {
+        try {
+            // Delete from IndexedDB
+            await db.deleteVideo(videoId);
+            
+            // Update state
+            setVideoHistory(prev => prev.filter(v => v.id !== videoId));
+            
+            console.log('Video deleted successfully:', videoId);
+        } catch (error) {
+            console.error('Error deleting video:', error);
+            setError(`Failed to delete video: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }, []);
+
+    // Handle video download
+    const handleVideoDownload = React.useCallback(async (video: VideoHistoryItem) => {
+        if (!video.videoUrl) {
+            setError('No video URL available for download');
+            return;
+        }
+
+        try {
+            const response = await fetch(video.videoUrl);
+            if (!response.ok) {
+                throw new Error('Failed to fetch video for download');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `video-${video.id}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            URL.revokeObjectURL(url);
+            
+            console.log('Video downloaded successfully:', video.id);
+        } catch (error) {
+            console.error('Error downloading video:', error);
+            setError(`Failed to download video: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }, []);
+
     // Load video history on mount
     React.useEffect(() => {
         if (allDbVideos) {
@@ -1134,14 +1183,24 @@ export default function HomePage() {
 
                     {/* Videos Tab */}
                     <TabsContent value='videos' className='space-y-6'>
-                        <VideoGenerationForm
-                            onSubmit={handleVideoSubmit}
-                            onTaskStatusCheck={handleVideoTaskStatus}
-                            isLoading={isVideoLoading}
-                            availableImages={imageHistory}
-                            onVideoGenerated={handleVideoGenerated}
-                            clientPasswordHash={clientPasswordHash}
-                        />
+                        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                            {/* Video Generation Form */}
+                            <VideoGenerationForm
+                                onSubmit={handleVideoSubmit}
+                                onTaskStatusCheck={handleVideoTaskStatus}
+                                isLoading={isVideoLoading}
+                                availableImages={imageHistory}
+                                onVideoGenerated={handleVideoGenerated}
+                                clientPasswordHash={clientPasswordHash}
+                            />
+                            
+                            {/* Video History */}
+                            <VideoHistoryPanel
+                                videos={videoHistory}
+                                onDelete={handleVideoDelete}
+                                onDownload={handleVideoDownload}
+                            />
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>

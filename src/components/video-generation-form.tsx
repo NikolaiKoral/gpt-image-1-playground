@@ -73,6 +73,24 @@ export function VideoGenerationForm({
 
             if (status.status === 'SUCCEEDED' && status.output) {
                 // Task completed successfully
+                // Runway returns output as an array, get the first video URL
+                console.log('Video generation output:', status.output);
+                let videoUrl: string;
+                
+                if (Array.isArray(status.output)) {
+                    videoUrl = status.output[0];
+                } else if (typeof status.output === 'string') {
+                    videoUrl = status.output;
+                } else if (status.output && typeof status.output === 'object' && 'videoUrl' in status.output) {
+                    videoUrl = status.output.videoUrl;
+                } else {
+                    console.error('Unexpected output format:', status.output);
+                    setError('Invalid video URL format received');
+                    return;
+                }
+                
+                console.log('Extracted video URL:', videoUrl);
+                
                 const videoItem: VideoHistoryItem = {
                     id: `video-${Date.now()}`,
                     taskId: taskId,
@@ -88,7 +106,7 @@ export function VideoGenerationForm({
                     duration,
                     seed: seed ? parseInt(seed) : undefined,
                     status: 'completed',
-                    videoUrl: status.output.videoUrl,
+                    videoUrl: videoUrl,
                     cost: estimatedCost,
                     metadata: {
                         fileSize: 0, // Will be determined when downloading
@@ -241,9 +259,9 @@ export function VideoGenerationForm({
                             <Label className='text-sm text-white/80'>Hurtige skabeloner</Label>
                             <div className='grid grid-cols-2 gap-2'>
                                 {Object.entries({
+                                    'Cinematisk still life': 'The scene gently comes to life as soft light shifts across the surfaces. The glassware catches subtle reflections as ambient light moves slowly through the space. Liquids in vessels gently ripple with barely perceptible movement. Shadows move elongate and shift gradually across the tabletop. Delicate natural elements sway slightly as if touched by a gentle breeze. Subtle atmospheric particles float through shafts of light. Locked camera with minimal depth of field changes. Cinematic lighting with natural color grading and subtle change in reflections and shadow.',
                                     'Produkt rotation': 'Langsom 360-graders rotation af produktet med elegant belysning',
                                     'Zoom ind': 'Gradvist zoom ind på produktet med blød fokus transition',
-                                    'Blid bevægelse': 'Subtile bevægelser i baggrunden, produktet forbliver i fokus',
                                     'Levitating': 'Produktet svæver let op og ned med subtil skygge'
                                 }).map(([name, template]) => (
                                     <Button
@@ -388,7 +406,7 @@ export function VideoGenerationForm({
                     )}
 
                     {/* Generated Video */}
-                    {generatedVideo && generatedVideo.videoUrl && (
+                    {generatedVideo && generatedVideo.videoUrl && typeof generatedVideo.videoUrl === 'string' && (
                         <div className='space-y-3'>
                             <Label className='text-white'>Genereret video</Label>
                             <VideoPlayer

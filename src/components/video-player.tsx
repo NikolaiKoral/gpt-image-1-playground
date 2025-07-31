@@ -233,6 +233,18 @@ export function VideoPlayer({
         };
     }, [resetControlsTimer, isPlaying]);
 
+    // Don't render if src is not a valid string
+    if (!src || typeof src !== 'string') {
+        return (
+            <div className={cn(
+                'relative bg-black rounded-lg overflow-hidden flex items-center justify-center',
+                className
+            )}>
+                <p className='text-white/60'>Invalid video source</p>
+            </div>
+        );
+    }
+
     return (
         <div
             ref={containerRef}

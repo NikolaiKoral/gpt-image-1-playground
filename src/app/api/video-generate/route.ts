@@ -99,31 +99,69 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No images provided for video generation' }, { status: 400 });
         }
 
-        // Helper function to ensure URLs are absolute HTTPS or convert to data URI
-        const ensureAbsoluteHttpsUrl = async (url: string, fallbackToDataUri: boolean = true): Promise<string> => {
-            // If it's a data URI, return as-is
+        // Helper function to convert URLs to data URIs
+        const convertToDataUri = async (url: string): Promise<string> => {
+            // If it's already a data URI, return as-is
             if (url.startsWith('data:')) {
                 return url;
             }
             
-            // If it's a blob URL and we need to convert to data URI
-            if (url.startsWith('blob:') && fallbackToDataUri) {
-                console.warn('Cannot use blob URLs with Runway API, skipping:', url);
+            // If it's a blob URL, we can't use it
+            if (url.startsWith('blob:')) {
+                console.warn('Cannot use blob URLs with Runway API:', url);
                 throw new Error('Blob URLs are not supported');
             }
             
-            // If it's a relative URL, make it absolute
-            if (url.startsWith('/')) {
-                // Use the production URL for Fly.io deployment
-                return `https://gpt-image-1-playground.fly.dev${url}`;
+            try {
+                // For API image URLs, fetch the image and convert to data URI
+                if (url.startsWith('/api/image/')) {
+                    const filename = url.split('/').pop();
+                    if (!filename) {
+                        throw new Error('Invalid image URL format');
+                    }
+                    
+                    const storageMode = process.env.NEXT_PUBLIC_IMAGE_STORAGE_MODE === 'indexeddb' ? 'indexeddb' : 'fs';
+                    
+                    if (storageMode === 'indexeddb') {
+                        // Fetch from IndexedDB
+                        const { db } = await import('@/lib/db');
+                        const imageRecord = await db.images.get(filename);
+                        
+                        if (!imageRecord || !imageRecord.blob) {
+                            throw new Error('Image not found in IndexedDB');
+                        }
+                        
+                        // Convert blob to data URI
+                        const arrayBuffer = await imageRecord.blob.arrayBuffer();
+                        const base64 = Buffer.from(arrayBuffer).toString('base64');
+                        const mimeType = imageRecord.blob.type || 'image/png';
+                        return `data:${mimeType};base64,${base64}`;
+                    } else {
+                        // Fetch from filesystem
+                        const fs = await import('fs/promises');
+                        const path = await import('path');
+                        const imageBaseDir = path.resolve(process.cwd(), 'generated-images');
+                        const filepath = path.join(imageBaseDir, filename);
+                        
+                        const fileBuffer = await fs.readFile(filepath);
+                        const base64 = fileBuffer.toString('base64');
+                        
+                        // Detect MIME type from extension
+                        const ext = path.extname(filename).toLowerCase();
+                        let mimeType = 'image/png';
+                        if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+                        else if (ext === '.webp') mimeType = 'image/webp';
+                        else if (ext === '.gif') mimeType = 'image/gif';
+                        
+                        return `data:${mimeType};base64,${base64}`;
+                    }
+                }
+                
+                throw new Error('Unsupported URL format');
+            } catch (error) {
+                console.error('Error converting URL to data URI:', error);
+                throw error;
             }
-            
-            // If it's already an absolute URL, ensure it's HTTPS
-            if (url.startsWith('http://')) {
-                return url.replace('http://', 'https://');
-            }
-            
-            return url;
         };
 
         // Prepare images for Runway API
@@ -133,10 +171,10 @@ export async function POST(request: NextRequest) {
             const source = imageSources[0];
             if (source.url) {
                 try {
-                    promptImage = await ensureAbsoluteHttpsUrl(source.url);
+                    promptImage = await convertToDataUri(source.url);
                 } catch (error) {
-                    console.error('Error processing URL:', error);
-                    return NextResponse.json({ error: 'Invalid image URL format' }, { status: 400 });
+                    console.error('Error converting URL to data URI:', error);
+                    return NextResponse.json({ error: 'Failed to process image: ' + error.message }, { status: 400 });
                 }
             } else if (source.file) {
                 // Convert file to data URI
@@ -156,9 +194,9 @@ export async function POST(request: NextRequest) {
                 
                 if (source.url) {
                     try {
-                        uri = await ensureAbsoluteHttpsUrl(source.url);
+                        uri = await convertToDataUri(source.url);
                     } catch (error) {
-                        console.error('Error processing URL:', error);
+                        console.error('Error converting URL to data URI:', error);
                         continue;
                     }
                 } else if (source.file) {
