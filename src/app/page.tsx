@@ -336,16 +336,21 @@ export default function HomePage() {
             apiFormData.append('mode', mode);
 
             // Only edit mode is supported
-            apiFormData.append('prompt', editPrompt);
-            apiFormData.append('n', editN[0].toString());
-            apiFormData.append('size', '1024x1024'); // Always use square format
-            apiFormData.append('quality', 'high'); // Always use high quality
+            apiFormData.append('prompt', formData.prompt);
+            apiFormData.append('n', formData.n.toString());
+            apiFormData.append('size', formData.size || '1024x1024');
+            apiFormData.append('quality', formData.quality || 'high');
 
-            editImageFiles.forEach((file, index) => {
+            // Check if formData has imageFiles (for quick edit) or use editImageFiles
+            const imagesToSend = 'imageFiles' in formData && formData.imageFiles ? formData.imageFiles : editImageFiles;
+            imagesToSend.forEach((file, index) => {
                 apiFormData.append(`image_${index}`, file, file.name);
             });
-            if (editGeneratedMaskFile) {
-                apiFormData.append('mask', editGeneratedMaskFile, editGeneratedMaskFile.name);
+
+            // Check if formData has maskFile (for quick edit) or use editGeneratedMaskFile
+            const maskToSend = 'maskFile' in formData && formData.maskFile ? formData.maskFile : editGeneratedMaskFile;
+            if (maskToSend) {
+                apiFormData.append('mask', maskToSend, maskToSend.name);
             }
 
             console.log('Sending request to /api/images with mode:', mode);
