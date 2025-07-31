@@ -8,6 +8,7 @@ import { VideoGenerationForm } from '@/components/video-generation-form';
 import { VideoHistoryPanel } from '@/components/video-history-panel';
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
+import { ImageEditingSuite } from '@/components/image-editing-suite';
 // import { MoodboardCenter, type GeneratedImage } from '@/components/moodboard-center'; // Commented out - moodboard disabled
 // import { MoodboardPresets } from '@/components/moodboard-presets'; // Commented out - moodboard disabled
 import { PasswordDialog } from '@/components/password-dialog';
@@ -20,7 +21,7 @@ import { downloadSingleImage, type DownloadableImage } from '@/lib/download-mana
 // import type { MoodboardPreset } from '@/types/templates'; // Commented out - moodboard disabled
 import type { VideoGenerationFormData, VideoHistoryItem, RunwayTask } from '@/types/video';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Image as ImageIcon, Video, Palette } from 'lucide-react';
+import { Image as ImageIcon, Video, Palette, Edit } from 'lucide-react';
 import * as React from 'react';
 
 type HistoryImage = {
@@ -77,7 +78,7 @@ type ApiImageResponseItem = {
 
 export default function HomePage() {
     const [mode, setMode] = React.useState<'generate' | 'edit'>('edit');
-    const [activeTab, setActiveTab] = React.useState<'images' | 'videos'>('images');
+    const [activeTab, setActiveTab] = React.useState<'images' | 'videos' | 'edit'>('images');
     const [isPasswordRequiredByBackend, setIsPasswordRequiredByBackend] = React.useState<boolean | null>(null);
     const [clientPasswordHash, setClientPasswordHash] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
@@ -1035,8 +1036,8 @@ export default function HomePage() {
             />
             <div className='w-full max-w-7xl space-y-6'>
                 {/* Main Tabs Navigation */}
-                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'images' | 'videos')} className='w-full'>
-                    <TabsList className='grid w-full grid-cols-2 bg-neutral-900/50 border border-white/10'>
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'images' | 'videos' | 'edit')} className='w-full'>
+                    <TabsList className='grid w-full grid-cols-3 bg-neutral-900/50 border border-white/10'>
                         <TabsTrigger value='images' className='flex items-center gap-2'>
                             <ImageIcon className='h-4 w-4' />
                             Billeder
@@ -1044,6 +1045,10 @@ export default function HomePage() {
                         <TabsTrigger value='videos' className='flex items-center gap-2'>
                             <Video className='h-4 w-4' />
                             Videoer
+                        </TabsTrigger>
+                        <TabsTrigger value='edit' className='flex items-center gap-2'>
+                            <Edit className='h-4 w-4' />
+                            Billede redigering
                         </TabsTrigger>
                     </TabsList>
 
@@ -1201,6 +1206,13 @@ export default function HomePage() {
                                 onDownload={handleVideoDownload}
                             />
                         </div>
+                    </TabsContent>
+
+                    {/* Image Editing Tab */}
+                    <TabsContent value='edit' className='space-y-6'>
+                        <ImageEditingSuite 
+                            clientPasswordHash={clientPasswordHash}
+                        />
                     </TabsContent>
                 </Tabs>
             </div>

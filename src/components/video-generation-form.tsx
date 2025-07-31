@@ -63,7 +63,6 @@ export function VideoGenerationForm({
     const [generatedVideo, setGeneratedVideo] = React.useState<VideoHistoryItem | null>(null);
     const [error, setError] = React.useState<string | null>(null);
     const [showAdvanced, setShowAdvanced] = React.useState(false);
-    const [estimatedCost, setEstimatedCost] = React.useState<number>(0);
 
     // Polling for task status
     const pollTaskStatus = React.useCallback(async (taskId: string) => {
@@ -111,7 +110,7 @@ export function VideoGenerationForm({
                     seed: seed ? parseInt(seed) : undefined,
                     status: 'completed',
                     videoUrl: videoUrl,
-                    cost: estimatedCost,
+                    cost: 0,
                     metadata: {
                         fileSize: 0, // Will be determined when downloading
                         format: 'mp4'
@@ -134,7 +133,7 @@ export function VideoGenerationForm({
             setError(`Failed to check generation status: ${error instanceof Error ? error.message : 'Unknown error'}`);
             setCurrentTask(null);
         }
-    }, [selectedImages, promptText, ratio, duration, seed, estimatedCost, onTaskStatusCheck, onVideoGenerated]);
+    }, [selectedImages, promptText, ratio, duration, seed, onTaskStatusCheck, onVideoGenerated]);
 
     // Handle form submission
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -183,13 +182,6 @@ export function VideoGenerationForm({
         setPromptText(template);
     };
 
-    // Calculate estimated cost
-    React.useEffect(() => {
-        const baseCost = 1.0;
-        const durationMultiplier = duration / 5;
-        const resolutionMultiplier = ratio.includes('1584') ? 1.5 : 1.0;
-        setEstimatedCost(baseCost * durationMultiplier * resolutionMultiplier);
-    }, [duration, ratio]);
 
     const isGenerating = currentTask !== null;
     const canSubmit = selectedImages.length > 0 && promptText.trim().length > 0 && !isGenerating;
@@ -253,9 +245,6 @@ export function VideoGenerationForm({
                         />
                         <div className='flex items-center justify-between text-xs text-white/60'>
                             <span>{promptText.length}/1000 tegn</span>
-                            {estimatedCost > 0 && (
-                                <span>Anslået omkostning: ~${estimatedCost.toFixed(2)}</span>
-                            )}
                         </div>
 
                         {/* Motion Templates */}
@@ -424,7 +413,6 @@ export function VideoGenerationForm({
                             <div className='flex items-center justify-between text-sm text-white/80'>
                                 <span>Varighed: {generatedVideo.duration}s</span>
                                 <span>Format: {generatedVideo.ratio}</span>
-                                <span>Omkostning: ${generatedVideo.cost.toFixed(2)}</span>
                             </div>
                         </div>
                     )}

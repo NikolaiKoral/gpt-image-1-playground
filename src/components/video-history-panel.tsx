@@ -11,7 +11,6 @@ import {
     Trash2, 
     Clock, 
     Video, 
-    DollarSign,
     FileVideo,
     Calendar,
     Play
@@ -59,14 +58,7 @@ export function VideoHistoryPanel({
         return `${seconds}s`;
     };
 
-    const formatCost = (cost?: number) => {
-        if (!cost) return 'N/A';
-        return `$${cost.toFixed(2)}`;
-    };
 
-    const getTotalCost = () => {
-        return videos.reduce((sum, video) => sum + (video.cost || 0), 0);
-    };
 
     if (videos.length === 0) {
         return (
@@ -91,9 +83,6 @@ export function VideoHistoryPanel({
                         <Clock className='h-5 w-5' />
                         Video historik
                     </CardTitle>
-                    <div className='text-sm text-white/60'>
-                        Total: {formatCost(getTotalCost())}
-                    </div>
                 </div>
             </CardHeader>
             <CardContent className='p-0'>
@@ -134,9 +123,6 @@ export function VideoHistoryPanel({
                                                 <h4 className='text-sm font-medium text-white truncate pr-2'>
                                                     {video.promptText.substring(0, 50)}...
                                                 </h4>
-                                                <span className='text-xs text-white/60 flex-shrink-0'>
-                                                    {formatCost(video.cost)}
-                                                </span>
                                             </div>
                                             
                                             <div className='flex items-center gap-4 text-xs text-white/60'>

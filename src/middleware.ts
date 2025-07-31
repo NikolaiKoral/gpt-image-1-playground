@@ -11,6 +11,7 @@ export function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.hostname = 'mood-image-gen.com';
     url.protocol = 'https:';
+    url.port = ''; // Remove port from redirect URL
     
     return NextResponse.redirect(url, 301); // 301 permanent redirect
   }

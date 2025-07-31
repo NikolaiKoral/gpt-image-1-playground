@@ -133,15 +133,6 @@ export function createPromptImages(imageSources: Array<{ url: string; position: 
     }));
 }
 
-// Helper function to estimate video generation cost
-export function estimateVideoCost(duration: number, ratio: string): number {
-    // Based on Runway pricing - these are estimates and should be updated with actual pricing
-    const baseCost = 1.0; // Base cost per generation
-    const durationMultiplier = duration / 5; // 5 seconds is base
-    const resolutionMultiplier = ratio.includes('1584') ? 1.5 : 1.0; // Ultra-wide costs more
-    
-    return baseCost * durationMultiplier * resolutionMultiplier;
-}
 
 // Helper function to validate video generation request
 export function validateVideoRequest(request: VideoGenerationRequest): { valid: boolean; errors: string[] } {

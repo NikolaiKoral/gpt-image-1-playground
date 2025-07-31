@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createVideoGeneration, validateVideoRequest, estimateVideoCost, createPromptImages } from '@/lib/runway-client';
+import { createVideoGeneration, validateVideoRequest, createPromptImages } from '@/lib/runway-client';
 import type { VideoGenerationRequest, ImageSource } from '@/types/video';
 
 function sha256(data: string): string {
@@ -245,10 +245,6 @@ export async function POST(request: NextRequest) {
                 details: validation.errors 
             }, { status: 400 });
         }
-
-        // Estimate cost
-        const estimatedCost = estimateVideoCost(duration, ratio);
-        console.log('Estimated video generation cost:', estimatedCost);
 
         // Create video generation task
         const task = await createVideoGeneration(videoRequest);
