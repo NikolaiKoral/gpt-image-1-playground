@@ -73,6 +73,8 @@ export async function POST(request: NextRequest) {
             const urls = JSON.parse(imageUrls);
             const positions = imagePositions ? JSON.parse(imagePositions) : [];
             
+            console.log('Received image URLs from client:', urls);
+            
             urls.forEach((url: string, index: number) => {
                 imageSources.push({
                     type: 'generated',
@@ -160,6 +162,9 @@ export async function POST(request: NextRequest) {
             
             promptImage = promptImages;
         }
+
+        // Log the final promptImage for debugging
+        console.log('Final promptImage being sent to Runway:', JSON.stringify(promptImage, null, 2));
 
         // Create video generation request
         const videoRequest: VideoGenerationRequest = {

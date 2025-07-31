@@ -962,11 +962,12 @@ export default function HomePage() {
         return history.flatMap(item => 
             item.images.map(img => ({
                 filename: img.filename,
-                path: getImageSrc(img.filename) || `/api/image/${img.filename}`,
+                // Always use the API endpoint for video generation, not blob URLs
+                path: `/api/image/${img.filename}`,
                 createdAt: new Date(item.timestamp).toISOString()
             }))
         ).filter(img => img.path);
-    }, [history, getImageSrc]);
+    }, [history]);
 
     // Moodboard handlers commented out
 
