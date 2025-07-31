@@ -73,19 +73,23 @@ export function VideoGenerationForm({
 
             if (status.status === 'SUCCEEDED' && status.output) {
                 // Task completed successfully
-                // Runway returns output as an array, get the first video URL
+                // Extract video URL from the output
                 console.log('Video generation output:', status.output);
-                let videoUrl: string;
+                let videoUrl: string = '';
                 
-                if (Array.isArray(status.output)) {
-                    videoUrl = status.output[0];
-                } else if (typeof status.output === 'string') {
-                    videoUrl = status.output;
-                } else if (status.output && typeof status.output === 'object' && 'videoUrl' in status.output) {
+                // The output object should have a videoUrl property (set by runway-client.ts)
+                if (status.output && typeof status.output === 'object' && 'videoUrl' in status.output) {
                     videoUrl = status.output.videoUrl;
                 } else {
                     console.error('Unexpected output format:', status.output);
                     setError('Invalid video URL format received');
+                    return;
+                }
+                
+                // Validate the URL
+                if (!videoUrl || typeof videoUrl !== 'string' || videoUrl === '') {
+                    console.error('Invalid video URL:', videoUrl);
+                    setError('No video URL received from Runway');
                     return;
                 }
                 

@@ -69,12 +69,26 @@ export async function getTaskStatus(taskId: string): Promise<RunwayTask> {
 
         // Add output data if task is completed
         if (response.status === 'SUCCEEDED' && response.output) {
-            task.output = {
-                videoUrl: response.output[0]?.uri || '',
-                duration: response.output[0]?.duration || 0,
-                width: response.output[0]?.width || 0,
-                height: response.output[0]?.height || 0,
-            };
+            // Log the actual output structure for debugging
+            console.log('Runway API output structure:', response.output);
+            
+            // Runway returns an array of video URLs directly, not objects
+            if (Array.isArray(response.output) && response.output.length > 0) {
+                task.output = {
+                    videoUrl: response.output[0] || '',
+                    duration: 0, // These values aren't provided by Runway in the output
+                    width: 0,
+                    height: 0,
+                };
+            } else {
+                console.error('Unexpected output format from Runway:', response.output);
+                task.output = {
+                    videoUrl: '',
+                    duration: 0,
+                    width: 0,
+                    height: 0,
+                };
+            }
         }
 
         return task;
