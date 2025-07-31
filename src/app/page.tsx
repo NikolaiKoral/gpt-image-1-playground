@@ -4,17 +4,22 @@ import { EditingForm, type EditingFormData } from '@/components/editing-form';
 // import { GenerationForm, type GenerationFormData } from '@/components/generation-form'; // Commented out - generation disabled
 import type { GenerationFormData } from '@/components/generation-form';
 // Import type only for compatibility
+import { VideoGenerationForm } from '@/components/video-generation-form';
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
 // import { MoodboardCenter, type GeneratedImage } from '@/components/moodboard-center'; // Commented out - moodboard disabled
 // import { MoodboardPresets } from '@/components/moodboard-presets'; // Commented out - moodboard disabled
 import { PasswordDialog } from '@/components/password-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { db, type ImageRecord } from '@/lib/db';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { db, type ImageRecord, type VideoMetadata } from '@/lib/db';
 import { downloadSingleImage, type DownloadableImage } from '@/lib/download-manager';
 // import { MOODBOARD_PRESETS } from '@/lib/prompt-templates'; // Commented out - moodboard disabled
 // import type { MoodboardPreset } from '@/types/templates'; // Commented out - moodboard disabled
+import type { VideoGenerationFormData, VideoHistoryItem, RunwayTask } from '@/types/video';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Image as ImageIcon, Video, Palette } from 'lucide-react';
 import * as React from 'react';
 
 type HistoryImage = {
@@ -71,14 +76,17 @@ type ApiImageResponseItem = {
 
 export default function HomePage() {
     const [mode, setMode] = React.useState<'generate' | 'edit'>('edit');
+    const [activeTab, setActiveTab] = React.useState<'images' | 'videos'>('images');
     const [isPasswordRequiredByBackend, setIsPasswordRequiredByBackend] = React.useState<boolean | null>(null);
     const [clientPasswordHash, setClientPasswordHash] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const [isSendingToEdit, setIsSendingToEdit] = React.useState(false);
+    const [isVideoLoading, setIsVideoLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const [latestImageBatch, setLatestImageBatch] = React.useState<{ path: string; filename: string }[] | null>(null);
     const [imageOutputView, setImageOutputView] = React.useState<'grid' | number>('grid');
     const [history, setHistory] = React.useState<HistoryMetadata[]>([]);
+    const [videoHistory, setVideoHistory] = React.useState<VideoHistoryItem[]>([]);
     const [isInitialLoad, setIsInitialLoad] = React.useState(true);
     const [blobUrlCache, setBlobUrlCache] = React.useState<Record<string, string>>({});
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = React.useState(false);
@@ -89,6 +97,7 @@ export default function HomePage() {
     const [dialogCheckboxStateSkipConfirm, setDialogCheckboxStateSkipConfirm] = React.useState<boolean>(false);
 
     const allDbImages = useLiveQuery<ImageRecord[] | undefined>(() => db.images.toArray(), []);
+    const allDbVideos = useLiveQuery<VideoMetadata[] | undefined>(() => db.getAllVideos(), []);
 
     const [editImageFiles, setEditImageFiles] = React.useState<File[]>([]);
     const [editSourceImagePreviewUrls, setEditSourceImagePreviewUrls] = React.useState<string[]>([]);
@@ -836,6 +845,129 @@ export default function HomePage() {
         [effectiveStorageModeClient, allDbImages, editN, handleApiCall]
     );
 
+    // Video generation handlers
+    const handleVideoSubmit = React.useCallback(async (formData: VideoGenerationFormData): Promise<string> => {
+        setIsVideoLoading(true);
+        setError(null);
+
+        try {
+            const apiFormData = new FormData();
+            
+            // Add password hash if required
+            if (clientPasswordHash) {
+                apiFormData.append('passwordHash', clientPasswordHash);
+            }
+
+            // Add basic parameters
+            apiFormData.append('promptText', formData.promptText);
+            apiFormData.append('model', formData.model);
+            apiFormData.append('ratio', formData.ratio);
+            apiFormData.append('duration', formData.duration.toString());
+            
+            if (formData.seed !== undefined) {
+                apiFormData.append('seed', formData.seed.toString());
+            }
+            
+            apiFormData.append('publicFigureThreshold', formData.contentModeration.publicFigureThreshold);
+
+            // Handle images
+            const imageUrls: string[] = [];
+            const imagePositions: string[] = [];
+            let uploadIndex = 0;
+
+            for (const image of formData.sourceImages) {
+                if (image.type === 'generated' && image.url) {
+                    imageUrls.push(image.url);
+                    imagePositions.push(image.position);
+                } else if (image.type === 'uploaded' && image.file) {
+                    apiFormData.append(`image_${uploadIndex}`, image.file);
+                    uploadIndex++;
+                }
+            }
+
+            if (imageUrls.length > 0) {
+                apiFormData.append('imageUrls', JSON.stringify(imageUrls));
+                apiFormData.append('imagePositions', JSON.stringify(imagePositions));
+            }
+
+            console.log('Submitting video generation request...');
+            const response = await fetch('/api/video-generate', {
+                method: 'POST',
+                body: apiFormData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Video generation started:', result);
+            
+            return result.taskId;
+        } catch (error) {
+            console.error('Error submitting video generation:', error);
+            setError(`Failed to start video generation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw error;
+        } finally {
+            setIsVideoLoading(false);
+        }
+    }, [clientPasswordHash]);
+
+    const handleVideoTaskStatus = React.useCallback(async (taskId: string): Promise<RunwayTask> => {
+        try {
+            const response = await fetch(`/api/video-status/${taskId}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error checking video status:', error);
+            throw error;
+        }
+    }, []);
+
+    const handleVideoGenerated = React.useCallback(async (video: VideoHistoryItem) => {
+        try {
+            // Store video in IndexedDB
+            await db.addVideo(video);
+            
+            // Update video history state
+            setVideoHistory(prev => [video, ...prev]);
+            
+            console.log('Video stored successfully:', video.id);
+        } catch (error) {
+            console.error('Error storing video:', error);
+            setError(`Failed to store video: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }, []);
+
+    // Load video history on mount
+    React.useEffect(() => {
+        if (allDbVideos) {
+            const videoItems: VideoHistoryItem[] = allDbVideos.map(video => ({
+                ...video,
+                localVideoUrl: video.locallyStored ? `blob:${video.id}` : undefined
+            }));
+            setVideoHistory(videoItems);
+        }
+    }, [allDbVideos]);
+
+    // Create image history for video form
+    const imageHistory = React.useMemo(() => {
+        return history.flatMap(item => 
+            item.images.map(img => ({
+                filename: img.filename,
+                path: getImageSrc(img.filename) || `/api/image/${img.filename}`,
+                createdAt: new Date(item.timestamp).toISOString()
+            }))
+        ).filter(img => img.path);
+    }, [history, getImageSrc]);
+
     // Moodboard handlers commented out
 
     return (
@@ -852,38 +984,53 @@ export default function HomePage() {
                 }
             />
             <div className='w-full max-w-7xl space-y-6'>
-                <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-                    <div className='relative flex h-[95vh] min-h-[800px] flex-col lg:col-span-1'>
-                        {/* GenerationForm commented out for future reactivation */}
-                        {/* <div className={mode === 'generate' ? 'block h-full w-full' : 'hidden'}>
-                            <GenerationForm
-                                onSubmit={handleApiCall}
-                                isLoading={isLoading}
-                                currentMode={mode}
-                                onModeChange={setMode}
-                                isPasswordRequiredByBackend={isPasswordRequiredByBackend}
-                                clientPasswordHash={clientPasswordHash}
-                                onOpenPasswordDialog={handleOpenPasswordDialog}
-                                prompt={genPrompt}
-                                setPrompt={setGenPrompt}
-                                n={genN}
-                                setN={setGenN}
-                                size={genSize}
-                                setSize={setGenSize}
-                                quality={genQuality}
-                                setQuality={setGenQuality}
-                                outputFormat={genOutputFormat}
-                                setOutputFormat={setGenOutputFormat}
-                                compression={genCompression}
-                                setCompression={setGenCompression}
-                                background={genBackground}
-                                setBackground={setGenBackground}
-                                moderation={genModeration}
-                                setModeration={setGenModeration}
-                            />
-                        </div> */}
-                        <div className={mode === 'edit' ? 'block h-full w-full' : 'hidden'}>
-                            <EditingForm
+                {/* Main Tabs Navigation */}
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'images' | 'videos')} className='w-full'>
+                    <TabsList className='grid w-full grid-cols-2 bg-neutral-900/50 border border-white/10'>
+                        <TabsTrigger value='images' className='flex items-center gap-2'>
+                            <ImageIcon className='h-4 w-4' />
+                            Billeder
+                        </TabsTrigger>
+                        <TabsTrigger value='videos' className='flex items-center gap-2'>
+                            <Video className='h-4 w-4' />
+                            Videoer
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* Images Tab */}
+                    <TabsContent value='images' className='space-y-6'>
+                        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+                            <div className='relative flex h-[95vh] min-h-[800px] flex-col lg:col-span-1'>
+                                {/* GenerationForm commented out for future reactivation */}
+                                {/* <div className={mode === 'generate' ? 'block h-full w-full' : 'hidden'}>
+                                    <GenerationForm
+                                        onSubmit={handleApiCall}
+                                        isLoading={isLoading}
+                                        currentMode={mode}
+                                        onModeChange={setMode}
+                                        isPasswordRequiredByBackend={isPasswordRequiredByBackend}
+                                        clientPasswordHash={clientPasswordHash}
+                                        onOpenPasswordDialog={handleOpenPasswordDialog}
+                                        prompt={genPrompt}
+                                        setPrompt={setGenPrompt}
+                                        n={genN}
+                                        setN={setGenN}
+                                        size={genSize}
+                                        setSize={setGenSize}
+                                        quality={genQuality}
+                                        setQuality={setGenQuality}
+                                        outputFormat={genOutputFormat}
+                                        setOutputFormat={setGenOutputFormat}
+                                        compression={genCompression}
+                                        setCompression={setGenCompression}
+                                        background={genBackground}
+                                        setBackground={setGenBackground}
+                                        moderation={genModeration}
+                                        setModeration={setGenModeration}
+                                    />
+                                </div> */}
+                                <div className={mode === 'edit' ? 'block h-full w-full' : 'hidden'}>
+                                    <EditingForm
                                 onSubmit={handleApiCall}
                                 isLoading={isLoading || isSendingToEdit}
                                 currentMode={mode}
@@ -968,20 +1115,34 @@ export default function HomePage() {
                 )}
                 */}
 
-                <div className='min-h-[450px]'>
-                    <HistoryPanel
-                        history={history}
-                        onSelectImage={handleHistorySelect}
-                        onClearHistory={handleClearHistory}
-                        getImageSrc={getImageSrc}
-                        onDeleteItemRequest={handleRequestDeleteItem}
-                        itemPendingDeleteConfirmation={itemToDeleteConfirm}
-                        onConfirmDeletion={handleConfirmDeletion}
-                        onCancelDeletion={handleCancelDeletion}
-                        deletePreferenceDialogValue={dialogCheckboxStateSkipConfirm}
-                        onDeletePreferenceDialogChange={setDialogCheckboxStateSkipConfirm}
-                    />
-                </div>
+                        <div className='min-h-[450px]'>
+                            <HistoryPanel
+                                history={history}
+                                onSelectImage={handleHistorySelect}
+                                onClearHistory={handleClearHistory}
+                                getImageSrc={getImageSrc}
+                                onDeleteItemRequest={handleRequestDeleteItem}
+                                itemPendingDeleteConfirmation={itemToDeleteConfirm}
+                                onConfirmDeletion={handleConfirmDeletion}
+                                onCancelDeletion={handleCancelDeletion}
+                                deletePreferenceDialogValue={dialogCheckboxStateSkipConfirm}
+                                onDeletePreferenceDialogChange={setDialogCheckboxStateSkipConfirm}
+                            />
+                        </div>
+                    </TabsContent>
+
+                    {/* Videos Tab */}
+                    <TabsContent value='videos' className='space-y-6'>
+                        <VideoGenerationForm
+                            onSubmit={handleVideoSubmit}
+                            onTaskStatusCheck={handleVideoTaskStatus}
+                            isLoading={isVideoLoading}
+                            availableImages={imageHistory}
+                            onVideoGenerated={handleVideoGenerated}
+                            clientPasswordHash={clientPasswordHash}
+                        />
+                    </TabsContent>
+                </Tabs>
             </div>
         </main>
     );
