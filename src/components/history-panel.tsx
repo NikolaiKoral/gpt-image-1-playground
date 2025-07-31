@@ -19,7 +19,6 @@ import {
     Copy,
     Check,
     Layers,
-    DollarSign,
     Pencil,
     Sparkles as SparklesIcon,
     HardDrive,
@@ -50,11 +49,6 @@ const formatDuration = (ms: number): string => {
     return `${(ms / 1000).toFixed(1)}s`;
 };
 
-const calculateCost = (value: number, rate: number): string => {
-    const cost = value * rate;
-    return isNaN(cost) ? 'N/A' : cost.toFixed(4);
-};
-
 export function HistoryPanel({
     history,
     onSelectImage,
@@ -68,24 +62,7 @@ export function HistoryPanel({
     onDeletePreferenceDialogChange
 }: HistoryPanelProps) {
     const [openPromptDialogTimestamp, setOpenPromptDialogTimestamp] = React.useState<number | null>(null);
-    const [openCostDialogTimestamp, setOpenCostDialogTimestamp] = React.useState<number | null>(null);
-    const [isTotalCostDialogOpen, setIsTotalCostDialogOpen] = React.useState(false);
     const [copiedTimestamp, setCopiedTimestamp] = React.useState<number | null>(null);
-
-    const { totalCost, totalImages } = React.useMemo(() => {
-        let cost = 0;
-        let images = 0;
-        history.forEach((item) => {
-            if (item.costDetails) {
-                cost += item.costDetails.estimated_cost_usd;
-            }
-            images += item.images?.length ?? 0;
-        });
-
-        return { totalCost: Math.round(cost * 10000) / 10000, totalImages: images };
-    }, [history]);
-
-    const averageCost = totalImages > 0 ? totalCost / totalImages : 0;
 
     const handleCopy = async (text: string | null | undefined, timestamp: number) => {
         if (!text) return;
@@ -101,61 +78,7 @@ export function HistoryPanel({
     return (
         <Card className='flex h-full w-full flex-col overflow-hidden rounded-lg border border-white/10 bg-black'>
             <CardHeader className='flex flex-row items-center justify-between gap-4 border-b border-white/10 px-4 py-3'>
-                <div className='flex items-center gap-2'>
-                    <CardTitle className='text-lg font-medium text-white'>Historik</CardTitle>
-                    {totalCost > 0 && (
-                        <Dialog open={isTotalCostDialogOpen} onOpenChange={setIsTotalCostDialogOpen}>
-                            <DialogTrigger asChild>
-                                <button
-                                    className='mt-0.5 flex items-center gap-1 rounded-full bg-green-600/80 px-1.5 py-0.5 text-[12px] text-white transition-colors hover:bg-green-500/90'
-                                    aria-label='Vis samlet omkostningsoversigt'>
-                                    Samlet omkostning: ${totalCost.toFixed(4)}
-                                </button>
-                            </DialogTrigger>
-                            <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-[450px]'>
-                                <DialogHeader>
-                                    <DialogTitle className='text-white'>Samlet omkostningsoversigt</DialogTitle>
-                                    {/* Add sr-only description for accessibility */}
-                                    <DialogDescription className='sr-only'>
-                                        A summary of the total estimated cost for all generated images in the history.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className='space-y-1 pt-1 text-xs text-neutral-400'>
-                                    <p>Pricing for gpt-image-1:</p>
-                                    <ul className='list-disc pl-4'>
-                                        <li>Text Input: $5 / 1M tokens</li>
-                                        <li>Image Input: $10 / 1M tokens</li>
-                                        <li>Image Output: $40 / 1M tokens</li>
-                                    </ul>
-                                </div>
-                                <div className='space-y-2 py-4 text-sm text-neutral-300'>
-                                    <div className='flex justify-between'>
-                                        <span>Total Images Generated:</span> <span>{totalImages.toLocaleString()}</span>
-                                    </div>
-                                    <div className='flex justify-between'>
-                                        <span>Average Cost Per Image:</span> <span>${averageCost.toFixed(4)}</span>
-                                    </div>
-                                    <hr className='my-2 border-neutral-700' />
-                                    <div className='flex justify-between font-medium text-white'>
-                                        <span>Total Estimated Cost:</span>
-                                        <span>${totalCost.toFixed(4)}</span>
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button
-                                            type='button'
-                                            variant='secondary'
-                                            size='sm'
-                                            className='bg-neutral-700 text-neutral-200 hover:bg-neutral-600'>
-                                            Close
-                                        </Button>
-                                    </DialogClose>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    )}
-                </div>
+                <CardTitle className='text-lg font-medium text-white'>Historik</CardTitle>
                 {history.length > 0 && (
                     <Button
                         variant='ghost'
@@ -246,98 +169,6 @@ export function HistoryPanel({
                                                 )}
                                             </div>
                                         </button>
-                                        {item.costDetails && (
-                                            <Dialog
-                                                open={openCostDialogTimestamp === itemKey}
-                                                onOpenChange={(isOpen) => !isOpen && setOpenCostDialogTimestamp(null)}>
-                                                <DialogTrigger asChild>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setOpenCostDialogTimestamp(itemKey);
-                                                        }}
-                                                        className='absolute top-1 right-1 z-20 flex items-center gap-0.5 rounded-full bg-green-600/80 px-1.5 py-0.5 text-[11px] text-white transition-colors hover:bg-green-500/90'
-                                                        aria-label='Show cost breakdown'>
-                                                        <DollarSign size={12} />
-                                                        {item.costDetails.estimated_cost_usd.toFixed(4)}
-                                                    </button>
-                                                </DialogTrigger>
-                                                <DialogContent className='border-neutral-700 bg-neutral-900 text-white sm:max-w-[450px]'>
-                                                    <DialogHeader>
-                                                        <DialogTitle className='text-white'>Cost Breakdown</DialogTitle>
-                                                        <DialogDescription className='sr-only'>
-                                                            Estimated cost breakdown for this image generation.
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-                                                    <div className='space-y-1 pt-1 text-xs text-neutral-400'>
-                                                        <p>Pricing for gpt-image-1:</p>
-                                                        <ul className='list-disc pl-4'>
-                                                            <li>Text Input: $5 / 1M tokens</li>
-                                                            <li>Image Input: $10 / 1M tokens</li>
-                                                            <li>Image Output: $40 / 1M tokens</li>
-                                                        </ul>
-                                                    </div>
-                                                    <div className='space-y-2 py-4 text-sm text-neutral-300'>
-                                                        <div className='flex justify-between'>
-                                                            <span>Text Input Tokens:</span>{' '}
-                                                            <span>
-                                                                {item.costDetails.text_input_tokens.toLocaleString()}{' '}
-                                                                (~$
-                                                                {calculateCost(
-                                                                    item.costDetails.text_input_tokens,
-                                                                    0.000005
-                                                                )}
-                                                                )
-                                                            </span>
-                                                        </div>
-                                                        {item.costDetails.image_input_tokens > 0 && (
-                                                            <div className='flex justify-between'>
-                                                                <span>Image Input Tokens:</span>{' '}
-                                                                <span>
-                                                                    {item.costDetails.image_input_tokens.toLocaleString()}{' '}
-                                                                    (~$
-                                                                    {calculateCost(
-                                                                        item.costDetails.image_input_tokens,
-                                                                        0.00001
-                                                                    )}
-                                                                    )
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        <div className='flex justify-between'>
-                                                            <span>Image Output Tokens:</span>{' '}
-                                                            <span>
-                                                                {item.costDetails.image_output_tokens.toLocaleString()}{' '}
-                                                                (~$
-                                                                {calculateCost(
-                                                                    item.costDetails.image_output_tokens,
-                                                                    0.00004
-                                                                )}
-                                                                )
-                                                            </span>
-                                                        </div>
-                                                        <hr className='my-2 border-neutral-700' />
-                                                        <div className='flex justify-between font-medium text-white'>
-                                                            <span>Total Estimated Cost:</span>
-                                                            <span>
-                                                                ${item.costDetails.estimated_cost_usd.toFixed(4)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <DialogFooter>
-                                                        <DialogClose asChild>
-                                                            <Button
-                                                                type='button'
-                                                                variant='secondary'
-                                                                size='sm'
-                                                                className='bg-neutral-700 text-neutral-200 hover:bg-neutral-600'>
-                                                                Close
-                                                            </Button>
-                                                        </DialogClose>
-                                                    </DialogFooter>
-                                                </DialogContent>
-                                            </Dialog>
-                                        )}
                                     </div>
 
                                     <div className='space-y-1 rounded-b-md border border-t-0 border-neutral-700 bg-black p-2 text-xs text-white/60'>

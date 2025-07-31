@@ -10,7 +10,6 @@ import { ImageOutput } from '@/components/image-output';
 // import { MoodboardPresets } from '@/components/moodboard-presets'; // Commented out - moodboard disabled
 import { PasswordDialog } from '@/components/password-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { calculateApiCost, type CostDetails } from '@/lib/cost-utils';
 import { db, type ImageRecord } from '@/lib/db';
 import { downloadSingleImage, type DownloadableImage } from '@/lib/download-manager';
 // import { MOODBOARD_PRESETS } from '@/lib/prompt-templates'; // Commented out - moodboard disabled
@@ -32,7 +31,6 @@ export type HistoryMetadata = {
     moderation: 'low' | 'auto';
     prompt: string;
     mode: 'generate' | 'edit';
-    costDetails: CostDetails | null;
     output_format?: 'png' | 'jpeg' | 'webp';
 };
 
@@ -403,8 +401,6 @@ export default function HomePage() {
                     historyOutputFormat = 'png';
                     historyPrompt = editPrompt;
 
-                    const costDetails = calculateApiCost(result.usage);
-
                     const batchTimestamp = Date.now();
                     const newHistoryEntry: HistoryMetadata = {
                         timestamp: batchTimestamp,
@@ -416,8 +412,7 @@ export default function HomePage() {
                         moderation: historyModeration,
                         output_format: historyOutputFormat,
                         prompt: historyPrompt,
-                        mode: mode,
-                        costDetails: costDetails
+                        mode: mode
                     };
 
                     let newImageBatchPromises: Promise<{ path: string; filename: string } | null>[] = [];

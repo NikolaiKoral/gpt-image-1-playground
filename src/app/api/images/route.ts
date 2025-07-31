@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
 
         console.log(`All images processed. Mode: ${effectiveStorageMode}`);
 
-        return NextResponse.json({ images: savedImagesData, usage: result.usage });
+        return NextResponse.json({ images: savedImagesData });
     } catch (error: unknown) {
         console.error('Error in /api/images:', error);
 
