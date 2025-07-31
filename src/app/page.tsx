@@ -1115,20 +1115,20 @@ export default function HomePage() {
                 )}
                 */}
 
-                        <div className='min-h-[450px]'>
-                            <HistoryPanel
-                                history={history}
-                                onSelectImage={handleHistorySelect}
-                                onClearHistory={handleClearHistory}
-                                getImageSrc={getImageSrc}
-                                onDeleteItemRequest={handleRequestDeleteItem}
-                                itemPendingDeleteConfirmation={itemToDeleteConfirm}
-                                onConfirmDeletion={handleConfirmDeletion}
-                                onCancelDeletion={handleCancelDeletion}
-                                deletePreferenceDialogValue={dialogCheckboxStateSkipConfirm}
-                                onDeletePreferenceDialogChange={setDialogCheckboxStateSkipConfirm}
-                            />
-                        </div>
+                <div className='min-h-[450px]'>
+                    <HistoryPanel
+                        history={history}
+                        onSelectImage={handleHistorySelect}
+                        onClearHistory={handleClearHistory}
+                        getImageSrc={getImageSrc}
+                        onDeleteItemRequest={handleRequestDeleteItem}
+                        itemPendingDeleteConfirmation={itemToDeleteConfirm}
+                        onConfirmDeletion={handleConfirmDeletion}
+                        onCancelDeletion={handleCancelDeletion}
+                        deletePreferenceDialogValue={dialogCheckboxStateSkipConfirm}
+                        onDeletePreferenceDialogChange={setDialogCheckboxStateSkipConfirm}
+                    />
+                </div>
                     </TabsContent>
 
                     {/* Videos Tab */}
