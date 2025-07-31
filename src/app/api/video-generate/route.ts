@@ -99,11 +99,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No images provided for video generation' }, { status: 400 });
         }
 
-        // Helper function to ensure URLs are absolute HTTPS
-        const ensureAbsoluteHttpsUrl = (url: string): string => {
+        // Helper function to ensure URLs are absolute HTTPS or convert to data URI
+        const ensureAbsoluteHttpsUrl = async (url: string, fallbackToDataUri: boolean = true): Promise<string> => {
             // If it's a data URI, return as-is
             if (url.startsWith('data:')) {
                 return url;
+            }
+            
+            // If it's a blob URL and we need to convert to data URI
+            if (url.startsWith('blob:') && fallbackToDataUri) {
+                console.warn('Cannot use blob URLs with Runway API, skipping:', url);
+                throw new Error('Blob URLs are not supported');
             }
             
             // If it's a relative URL, make it absolute
@@ -126,7 +132,12 @@ export async function POST(request: NextRequest) {
         if (imageSources.length === 1) {
             const source = imageSources[0];
             if (source.url) {
-                promptImage = ensureAbsoluteHttpsUrl(source.url);
+                try {
+                    promptImage = await ensureAbsoluteHttpsUrl(source.url);
+                } catch (error) {
+                    console.error('Error processing URL:', error);
+                    return NextResponse.json({ error: 'Invalid image URL format' }, { status: 400 });
+                }
             } else if (source.file) {
                 // Convert file to data URI
                 const buffer = Buffer.from(await source.file.arrayBuffer());
@@ -144,7 +155,12 @@ export async function POST(request: NextRequest) {
                 let uri: string;
                 
                 if (source.url) {
-                    uri = ensureAbsoluteHttpsUrl(source.url);
+                    try {
+                        uri = await ensureAbsoluteHttpsUrl(source.url);
+                    } catch (error) {
+                        console.error('Error processing URL:', error);
+                        continue;
+                    }
                 } else if (source.file) {
                     const buffer = Buffer.from(await source.file.arrayBuffer());
                     const base64 = buffer.toString('base64');
@@ -158,6 +174,10 @@ export async function POST(request: NextRequest) {
                     uri,
                     position: source.position
                 });
+            }
+            
+            if (promptImages.length === 0) {
+                return NextResponse.json({ error: 'No valid images could be processed' }, { status: 400 });
             }
             
             promptImage = promptImages;
