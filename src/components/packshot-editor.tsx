@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { MultiImageDropZone } from '@/components/multi-image-drop-zone';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { 
     Package, 
@@ -241,6 +242,42 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
         }
     };
 
+    // Download selected images as ZIP
+    const handleDownloadSelected = async () => {
+        if (selectedImages.length === 0) return;
+
+        try {
+            const response = await fetch('/api/image-edit/packshot/download-selected', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    passwordHash: clientPasswordHash,
+                    format: isPngFormat ? 'png' : 'jpg',
+                    selectedFiles: selectedImages
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Download fejlede');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `packshot-selected-${Date.now()}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error('Error downloading selected images:', err);
+            setError('Download fejlede');
+        }
+    };
+
     // Load processed images on mount
     React.useEffect(() => {
         loadProcessedImages();
@@ -383,6 +420,16 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
                                     <Download className='mr-2 h-4 w-4' />
                                     Download alle
                                 </Button>
+                                {selectedImages.length > 0 && (
+                                    <Button
+                                        onClick={handleDownloadSelected}
+                                        size='sm'
+                                        variant='outline'
+                                        className='border-white/20 text-white hover:bg-white/10'>
+                                        <Download className='mr-2 h-4 w-4' />
+                                        Download valgte ({selectedImages.length})
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -398,11 +445,41 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
                             </p>
                         </div>
                     ) : (
-                        <div className='grid grid-cols-2 gap-4'>
+                        <>
+                            <div className='flex items-center gap-2 mb-4'>
+                                <Checkbox
+                                    checked={selectedImages.length === processedImages.length}
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            setSelectedImages(processedImages.map(img => img.filename));
+                                        } else {
+                                            setSelectedImages([]);
+                                        }
+                                    }}
+                                    className='border-white/40 data-[state=checked]:bg-white data-[state=checked]:text-black'
+                                />
+                                <Label className='text-sm text-white/80 cursor-pointer'>
+                                    Vælg alle
+                                </Label>
+                            </div>
+                            <div className='grid grid-cols-2 gap-4'>
                             {processedImages.map((image, index) => (
                                 <div
                                     key={index}
                                     className='group relative aspect-square rounded-lg border border-white/10 bg-white/5 overflow-hidden'>
+                                    <div className='absolute top-2 left-2 z-10'>
+                                        <Checkbox
+                                            checked={selectedImages.includes(image.filename)}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setSelectedImages([...selectedImages, image.filename]);
+                                                } else {
+                                                    setSelectedImages(selectedImages.filter(f => f !== image.filename));
+                                                }
+                                            }}
+                                            className='border-white/60 bg-black/50 data-[state=checked]:bg-white data-[state=checked]:text-black'
+                                        />
+                                    </div>
                                     <img
                                         src={image.url}
                                         alt={image.filename}
@@ -421,7 +498,8 @@ export function PackshotEditor({ clientPasswordHash }: PackshotEditorProps) {
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
