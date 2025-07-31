@@ -181,32 +181,11 @@ export async function processMoodImage(
         const isSquareAfterOps = currentMetadata.width === currentMetadata.height;
         
         // Now resize the (potentially trimmed/flattened) image
-        if (opts.maintainAspectRatio) {
-            if (isSquareAfterOps || opts.outputFormat === 'square') {
-                image = image.resize(800, 800, {
-                    fit: opts.outputFormat === 'cover' ? 'cover' : 'inside',
-                    withoutEnlargement: false
-                });
-            } else if (opts.outputFormat === 'original') {
-                // Maintain original aspect ratio
-                image = image.resize(800, 800, {
-                    fit: 'inside',
-                    withoutEnlargement: false
-                });
-            } else {
-                // Cover mode
-                image = image.resize(800, 800, {
-                    fit: 'cover',
-                    withoutEnlargement: false
-                });
-            }
-        } else {
-            // Force square
-            image = image.resize(800, 800, {
-                fit: 'fill',
-                withoutEnlargement: false
-            });
-        }
+        // Always use cover to ensure 800x800 output (as per smart_cropper logic)
+        image = image.resize(800, 800, {
+            fit: 'cover',
+            withoutEnlargement: false
+        });
 
         // Output as PNG
         const outputBuffer = await image.png().toBuffer();
