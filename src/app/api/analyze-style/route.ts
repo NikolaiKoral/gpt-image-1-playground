@@ -5,14 +5,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: NextRequest) {
     try {
-        const { images } = await request.json();
+        const { files } = await request.json();
 
-        if (!images || !Array.isArray(images) || images.length === 0) {
-            return NextResponse.json({ error: 'Mindst ét billede er påkrævet' }, { status: 400 });
-        }
-
-        if (images.length > 5) {
-            return NextResponse.json({ error: 'Maksimalt 5 billeder tilladt' }, { status: 400 });
+        if (!files || !Array.isArray(files) || files.length === 0) {
+            return NextResponse.json({ error: 'Mindst én fil er påkrævet' }, { status: 400 });
         }
 
         if (!process.env.GEMINI_API_KEY) {
@@ -21,7 +17,7 @@ export async function POST(request: NextRequest) {
 
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
-        const systemPrompt = `Du er en ekspert fotografi-analytiker med speciale i at identificere og beskrive fotografiske stilarter. Analyser de uploadede billeder og giv en detaljeret beskrivelse af den fotografiske stil.
+        const systemPrompt = `Du er en ekspert visuel analytiker med speciale i at identificere og beskrive visuelle stilarter fra både billeder og PDF-dokumenter. Analyser de uploadede filer og giv en detaljeret beskrivelse af den visuelle stil.
 
 Analyser følgende aspekter:
 
@@ -95,12 +91,12 @@ Svar KUN med JSON-objektet på dansk, ingen yderligere tekst.`;
         // Build content parts for multimodal input
         const contentParts: any[] = [{ text: systemPrompt }];
 
-        // Add all images
-        images.forEach((imageData: string) => {
+        // Add all files with their proper mime types
+        files.forEach((fileData: { base64: string; mimeType: string }) => {
             contentParts.push({
                 inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: imageData
+                    mimeType: fileData.mimeType,
+                    data: fileData.base64
                 }
             });
         });

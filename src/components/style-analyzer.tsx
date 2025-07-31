@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStyleAnalysis, type StyleAnalysis, type StyleAnalysisSection } from '@/hooks/useStyleAnalysis';
+import { isPdfFile, formatFileSize } from '@/lib/pdf-utils';
 import { cn } from '@/lib/utils';
 import {
     Camera,
@@ -17,7 +18,8 @@ import {
     Check,
     Loader2,
     Image as ImageIcon,
-    AlertCircle
+    AlertCircle,
+    FileText
 } from 'lucide-react';
 import * as React from 'react';
 
@@ -45,7 +47,7 @@ const SECTION_TITLES = {
 };
 
 export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) {
-    const [imageFiles, setImageFiles] = React.useState<File[]>([]);
+    const [files, setFiles] = React.useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = React.useState<string[]>([]);
     const [analysis, setAnalysis] = React.useState<StyleAnalysis | null>(null);
     const [copiedSection, setCopiedSection] = React.useState<string | null>(null);
@@ -61,31 +63,47 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
     }, [previewUrls]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
+        const selectedFiles = Array.from(e.target.files || []);
+        if (selectedFiles.length === 0) return;
 
-        // Limit to 5 files
-        const limitedFiles = files.slice(0, 5);
+        // No limit on files to leverage 1M token context
+        // But check total size (20MB per file limit)
+        const validFiles = selectedFiles.filter(file => {
+            if (file.size > 20 * 1024 * 1024) {
+                console.warn(`File ${file.name} is too large (${formatFileSize(file.size)}). Max 20MB per file.`);
+                return false;
+            }
+            return true;
+        });
         
-        // Create preview URLs
-        const newPreviewUrls = limitedFiles.map(file => URL.createObjectURL(file));
+        // Create preview URLs for images only
+        const newPreviewUrls = validFiles.map(file => {
+            if (isPdfFile(file)) {
+                return ''; // No preview for PDFs
+            }
+            return URL.createObjectURL(file);
+        });
         
         // Clean up old preview URLs
-        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        previewUrls.forEach(url => {
+            if (url) URL.revokeObjectURL(url);
+        });
         
-        setImageFiles(limitedFiles);
+        setFiles(validFiles);
         setPreviewUrls(newPreviewUrls);
         setAnalysis(null);
     };
 
-    const handleRemoveImage = (index: number) => {
-        const newFiles = imageFiles.filter((_, i) => i !== index);
+    const handleRemoveFile = (index: number) => {
+        const newFiles = files.filter((_, i) => i !== index);
         const newUrls = previewUrls.filter((_, i) => i !== index);
         
-        // Clean up removed URL
-        URL.revokeObjectURL(previewUrls[index]);
+        // Clean up removed URL if it exists
+        if (previewUrls[index]) {
+            URL.revokeObjectURL(previewUrls[index]);
+        }
         
-        setImageFiles(newFiles);
+        setFiles(newFiles);
         setPreviewUrls(newUrls);
         
         if (newFiles.length === 0) {
@@ -94,9 +112,9 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
     };
 
     const handleAnalyze = async () => {
-        if (imageFiles.length === 0) return;
+        if (files.length === 0) return;
         
-        const result = await analyzeStyle(imageFiles);
+        const result = await analyzeStyle(files);
         if (result) {
             setAnalysis(result);
         }
@@ -166,7 +184,7 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
                         Stil Inspiration
                     </CardTitle>
                     <CardDescription>
-                        Upload op til 5 referencebilleder for at analysere deres fotografiske stil
+                        Upload billeder eller PDF-dokumenter for at analysere deres visuelle stil (maks 20MB pr. fil)
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -175,7 +193,7 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept="image/*"
+                            accept="image/*,.pdf,application/pdf"
                             multiple
                             onChange={handleFileSelect}
                             className="hidden"
@@ -187,35 +205,59 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
                             className="w-full"
                         >
                             <Upload className="mr-2 h-4 w-4" />
-                            Vælg billeder (maks 5)
+                            Vælg billeder eller PDF-filer
                         </Button>
                     </div>
 
-                    {/* Image Previews */}
-                    {previewUrls.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                            {previewUrls.map((url, index) => (
-                                <div key={index} className="relative aspect-square">
-                                    <img
-                                        src={url}
-                                        alt={`Reference ${index + 1}`}
-                                        className="w-full h-full object-cover rounded-lg"
-                                    />
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="absolute top-1 right-1 h-6 w-6 p-0"
-                                        onClick={() => handleRemoveImage(index)}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
+                    {/* File Previews */}
+                    {files.length > 0 && (
+                        <div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {files.map((file, index) => {
+                                    const isPdf = isPdfFile(file);
+                                    const url = previewUrls[index];
+                                    
+                                    return (
+                                        <div key={index} className="relative">
+                                            <div className="aspect-square rounded-lg border border-white/10 bg-black/20 overflow-hidden">
+                                                {isPdf ? (
+                                                    <div className="flex flex-col items-center justify-center h-full p-4">
+                                                        <FileText className="h-12 w-12 text-primary mb-2" />
+                                                        <p className="text-xs text-center text-muted-foreground line-clamp-2">
+                                                            {file.name}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {formatFileSize(file.size)}
+                                                        </p>
+                                                    </div>
+                                                ) : url ? (
+                                                    <img
+                                                        src={url}
+                                                        alt={`Reference ${index + 1}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : null}
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                className="absolute top-1 right-1 h-6 w-6 p-0"
+                                                onClick={() => handleRemoveFile(index)}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                {files.length} fil{files.length !== 1 ? 'er' : ''} valgt
+                            </p>
                         </div>
                     )}
 
                     {/* Analyze Button */}
-                    {imageFiles.length > 0 && !analysis && (
+                    {files.length > 0 && !analysis && (
                         <Button
                             onClick={handleAnalyze}
                             disabled={isAnalyzing}
@@ -253,7 +295,7 @@ export function StyleAnalyzer({ onApplyPrompt, className }: StyleAnalyzerProps) 
                                     variant="outline"
                                     onClick={() => {
                                         setAnalysis(null);
-                                        setImageFiles([]);
+                                        setFiles([]);
                                         setPreviewUrls([]);
                                     }}
                                 >
