@@ -2,8 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useMaskDrawing } from '@/hooks/useMaskDrawing';
 import { cn } from '@/lib/utils';
-import { Loader2, Grid, Download, Edit3, Sparkles } from 'lucide-react';
+import { Loader2, Grid, Download, Edit3, Sparkles, Paintbrush, Type, Eraser } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 
@@ -19,7 +23,7 @@ type ImageOutputProps = {
     altText?: string;
     isLoading: boolean;
     onSendToEdit: (filename: string) => void;
-    onQuickEdit?: (filename: string, editText: string) => void;
+    onQuickEdit?: (filename: string, editText: string, maskFile?: File | null) => void;
     onDownload?: (filename: string, imageUrl: string) => void;
     onContinueEditing?: (filename: string) => void;
     currentMode: 'generate' | 'edit';
@@ -134,7 +138,25 @@ export function ImageOutput({
 }: ImageOutputProps) {
     const [quickEditText, setQuickEditText] = React.useState('');
     const [isQuickEditing, setIsQuickEditing] = React.useState(false);
-    // handleSendClick removed - replaced with quick edit functionality
+    const [editMode, setEditMode] = React.useState<'text' | 'mask'>('text');
+    
+    // Get current image dimensions for mask drawing
+    const [imageDimensions, setImageDimensions] = React.useState({ width: 1024, height: 1024 });
+    
+    // Mask drawing hook
+    const {
+        canvasRef,
+        maskFile,
+        maskPreviewUrl,
+        brushSize,
+        setBrushSize,
+        clearMask,
+        hasDrawn
+    } = useMaskDrawing({
+        imageWidth: imageDimensions.width,
+        imageHeight: imageDimensions.height,
+        enabled: editMode === 'mask'
+    });
 
     const handleQuickEditSubmit = async () => {
         if (
@@ -149,8 +171,11 @@ export function ImageOutput({
 
         setIsQuickEditing(true);
         try {
-            await onQuickEdit(imageBatch[viewMode].filename, quickEditText);
+            await onQuickEdit(imageBatch[viewMode].filename, quickEditText, editMode === 'mask' ? maskFile : null);
             setQuickEditText('');
+            if (editMode === 'mask') {
+                clearMask();
+            }
         } catch (error) {
             console.error('Quick edit failed:', error);
         } finally {
@@ -230,32 +255,148 @@ export function ImageOutput({
                                         <div>
                                             <h3 className='text-sm font-medium text-white/90'>Hurtig redigering</h3>
                                             <p className='text-xs text-white/60'>
-                                                Beskriv hvordan billedet skal redigeres
+                                                Vælg redigeringsmetode og beskriv ændringer
                                             </p>
                                         </div>
                                     </div>
-                                    <div className='flex gap-3'>
-                                        <Input
-                                            value={quickEditText}
-                                            onChange={(e) => setQuickEditText(e.target.value)}
-                                            onKeyPress={handleQuickEditKeyPress}
-                                            placeholder='Beskriv redigeringsanvisninger...'
-                                            disabled={isQuickEditing}
-                                            className='flex-1 border-white/20 bg-black/50 text-white placeholder:text-white/40'
-                                        />
-                                        <Button
-                                            onClick={handleQuickEditSubmit}
-                                            disabled={!quickEditText.trim() || isQuickEditing}
-                                            className='bg-blue-600 text-white hover:bg-blue-700'
-                                            size='sm'>
-                                            {isQuickEditing ? (
-                                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                                            ) : (
-                                                <Sparkles className='mr-2 h-4 w-4' />
-                                            )}
-                                            {isQuickEditing ? 'Redigerer...' : 'Start redigering'}
-                                        </Button>
-                                    </div>
+
+                                    {/* Mode Selector Tabs */}
+                                    <Tabs value={editMode} onValueChange={(value) => setEditMode(value as 'text' | 'mask')}>
+                                        <TabsList className='grid w-full grid-cols-2 bg-black/50'>
+                                            <TabsTrigger value='text' className='flex items-center gap-2'>
+                                                <Type className='h-4 w-4' />
+                                                Tekst prompt
+                                            </TabsTrigger>
+                                            <TabsTrigger value='mask' className='flex items-center gap-2'>
+                                                <Paintbrush className='h-4 w-4' />
+                                                Mask redigering
+                                            </TabsTrigger>
+                                        </TabsList>
+
+                                        {/* Text Mode Content */}
+                                        <TabsContent value='text' className='space-y-3'>
+                                            <div className='flex gap-3'>
+                                                <Input
+                                                    value={quickEditText}
+                                                    onChange={(e) => setQuickEditText(e.target.value)}
+                                                    onKeyPress={handleQuickEditKeyPress}
+                                                    placeholder='Beskriv redigeringsanvisninger...'
+                                                    disabled={isQuickEditing}
+                                                    className='flex-1 border-white/20 bg-black/50 text-white placeholder:text-white/40'
+                                                />
+                                                <Button
+                                                    onClick={handleQuickEditSubmit}
+                                                    disabled={!quickEditText.trim() || isQuickEditing}
+                                                    className='bg-blue-600 text-white hover:bg-blue-700'
+                                                    size='sm'>
+                                                    {isQuickEditing ? (
+                                                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                                    ) : (
+                                                        <Sparkles className='mr-2 h-4 w-4' />
+                                                    )}
+                                                    {isQuickEditing ? 'Redigerer...' : 'Start redigering'}
+                                                </Button>
+                                            </div>
+                                            <p className='text-xs text-white/50'>
+                                                Eksempler: "tilføj en kop kaffe", "skift baggrunden til en skov", "gør produktet større"
+                                            </p>
+                                        </TabsContent>
+
+                                        {/* Mask Mode Content */}
+                                        <TabsContent value='mask' className='space-y-3'>
+                                            <div className='space-y-3'>
+                                                {/* Brush Size Control */}
+                                                <div className='space-y-2'>
+                                                    <Label className='text-xs text-white/80'>Penselstørrelse: {brushSize}px</Label>
+                                                    <Slider
+                                                        value={[brushSize]}
+                                                        onValueChange={([value]) => setBrushSize(value)}
+                                                        min={5}
+                                                        max={50}
+                                                        step={1}
+                                                        className='[&>button]:border-black [&>button]:bg-white [&>button]:ring-offset-black [&>span:first-child]:h-1 [&>span:first-child>span]:bg-white'
+                                                    />
+                                                </div>
+
+                                                {/* Canvas Container */}
+                                                <div className='relative overflow-hidden rounded border border-white/20 bg-black'>
+                                                    <Image
+                                                        src={imageBatch[viewMode].path}
+                                                        alt='Base image for mask editing'
+                                                        width={imageDimensions.width}
+                                                        height={imageDimensions.height}
+                                                        className='pointer-events-none max-h-48 w-full object-contain'
+                                                        unoptimized
+                                                        onLoad={(e) => {
+                                                            const img = e.target as HTMLImageElement;
+                                                            setImageDimensions({
+                                                                width: img.naturalWidth,
+                                                                height: img.naturalHeight
+                                                            });
+                                                        }}
+                                                    />
+                                                    <canvas
+                                                        ref={canvasRef}
+                                                        width={imageDimensions.width}
+                                                        height={imageDimensions.height}
+                                                        className='absolute inset-0 max-h-48 w-full cursor-crosshair'
+                                                        style={{
+                                                            width: '100%',
+                                                            height: 'auto',
+                                                            maxHeight: '12rem',
+                                                            objectFit: 'contain'
+                                                        }}
+                                                    />
+                                                    {maskPreviewUrl && (
+                                                        <Image
+                                                            src={maskPreviewUrl}
+                                                            alt='Mask overlay'
+                                                            width={imageDimensions.width}
+                                                            height={imageDimensions.height}
+                                                            className='pointer-events-none absolute inset-0 max-h-48 w-full object-contain opacity-50'
+                                                            unoptimized
+                                                        />
+                                                    )}
+                                                </div>
+
+                                                {/* Mask Controls */}
+                                                <div className='flex items-center gap-2'>
+                                                    <Button
+                                                        onClick={clearMask}
+                                                        disabled={!hasDrawn || isQuickEditing}
+                                                        variant='outline'
+                                                        size='sm'
+                                                        className='border-white/20 text-white/80 hover:bg-white/10'>
+                                                        <Eraser className='mr-2 h-4 w-4' />
+                                                        Ryd mask
+                                                    </Button>
+                                                    <Input
+                                                        value={quickEditText}
+                                                        onChange={(e) => setQuickEditText(e.target.value)}
+                                                        onKeyPress={handleQuickEditKeyPress}
+                                                        placeholder='Hvad skal erstatte det markerede?'
+                                                        disabled={isQuickEditing}
+                                                        className='flex-1 border-white/20 bg-black/50 text-white placeholder:text-white/40'
+                                                    />
+                                                    <Button
+                                                        onClick={handleQuickEditSubmit}
+                                                        disabled={!hasDrawn || !quickEditText.trim() || isQuickEditing}
+                                                        className='bg-blue-600 text-white hover:bg-blue-700'
+                                                        size='sm'>
+                                                        {isQuickEditing ? (
+                                                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                                        ) : (
+                                                            <Sparkles className='mr-2 h-4 w-4' />
+                                                        )}
+                                                        {isQuickEditing ? 'Redigerer...' : 'Anvend'}
+                                                    </Button>
+                                                </div>
+                                                <p className='text-xs text-white/50'>
+                                                    Tegn på billedet for at markere områder. Røde områder vil blive erstattet med dit prompt.
+                                                </p>
+                                            </div>
+                                        </TabsContent>
+                                    </Tabs>
                                 </div>
                             )}
                         </div>

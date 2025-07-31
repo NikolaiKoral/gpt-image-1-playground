@@ -787,7 +787,7 @@ export default function HomePage() {
     );
 
     const handleQuickEdit = React.useCallback(
-        async (filename: string, editText: string) => {
+        async (filename: string, editText: string, maskFile?: File | null) => {
             try {
                 // First, get the image file for the quick edit
                 let imageFile: File;
@@ -813,7 +813,7 @@ export default function HomePage() {
                     imageFile = new File([blob], filename, { type: mimeType });
                 }
 
-                console.log(`Quick edit initiated for ${filename} with prompt: ${editText}`);
+                console.log(`Quick edit initiated for ${filename} with prompt: ${editText}${maskFile ? ' (with mask)' : ''}`);
 
                 // Create the form data for immediate submission
                 const quickEditFormData: EditingFormData = {
@@ -822,7 +822,7 @@ export default function HomePage() {
                     size: '1024x1024',
                     quality: 'high',
                     imageFiles: [imageFile],
-                    maskFile: null // Quick edit doesn't use masks
+                    maskFile: maskFile || null
                 };
 
                 console.log('Automatically submitting quick edit to API...', quickEditFormData);
