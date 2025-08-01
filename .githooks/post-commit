@@ -1,0 +1,99 @@
+#!/bin/bash
+# Post-commit hook for GPT-Image-1-Playground
+# Logs commits and suggests follow-up actions
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Get commit information
+COMMIT_HASH=$(git rev-parse HEAD)
+COMMIT_MSG=$(git log -1 --pretty=%B)
+COMMIT_AUTHOR=$(git log -1 --pretty=%an)
+COMMIT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Create logs directory if it doesn't exist
+LOG_DIR=".dev-logs"
+mkdir -p "$LOG_DIR"
+
+# Log the commit
+LOG_FILE="$LOG_DIR/commits.log"
+echo "[$COMMIT_DATE] $BRANCH - $COMMIT_HASH" >> "$LOG_FILE"
+echo "  Author: $COMMIT_AUTHOR" >> "$LOG_FILE"
+echo "  Message: $COMMIT_MSG" >> "$LOG_FILE"
+echo "" >> "$LOG_FILE"
+
+echo -e "${GREEN}✅ Commit successful!${NC}"
+echo -e "${BLUE}📝 Commit: ${NC}$COMMIT_HASH"
+echo -e "${BLUE}📋 Message: ${NC}$COMMIT_MSG"
+
+# Check what was changed
+CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+CHANGED_COUNT=$(echo "$CHANGED_FILES" | wc -l)
+
+# Analyze changes and suggest actions
+echo -e "\n${YELLOW}📊 Analysis of changes:${NC}"
+echo "Changed $CHANGED_COUNT file(s)"
+
+# Check for specific file types
+if echo "$CHANGED_FILES" | grep -q "\.tsx\?$"; then
+    echo -e "${YELLOW}💡 TypeScript/React files changed - consider running tests${NC}"
+    SUGGEST_TEST=true
+fi
+
+if echo "$CHANGED_FILES" | grep -q "package\.json$"; then
+    echo -e "${YELLOW}📦 package.json changed - remember to run npm install${NC}"
+fi
+
+if echo "$CHANGED_FILES" | grep -q "fly\.toml$\|Dockerfile"; then
+    echo -e "${YELLOW}🚀 Deployment configuration changed - test deployment locally${NC}"
+fi
+
+if echo "$CHANGED_FILES" | grep -q "^src/lib/templates/"; then
+    echo -e "${YELLOW}📝 Template files changed - verify Danish translations${NC}"
+fi
+
+if echo "$CHANGED_FILES" | grep -q "^src/app/api/"; then
+    echo -e "${YELLOW}🔌 API routes changed - test endpoints thoroughly${NC}"
+fi
+
+# Check if Claude is available for advanced analysis
+if command -v claude &> /dev/null; then
+    echo -e "\n${BLUE}🤖 Running Claude post-commit analysis...${NC}"
+    
+    # Quick test check
+    if [ "$SUGGEST_TEST" = true ]; then
+        echo "Running quick test check..."
+        claude /qtest --check-only 2>/dev/null || echo -e "${YELLOW}⚠️  Consider running full tests${NC}"
+    fi
+    
+    # Log significant commits for weekly summary
+    if [ "$CHANGED_COUNT" -gt 5 ]; then
+        echo "$COMMIT_HASH - $COMMIT_MSG (${CHANGED_COUNT} files)" >> "$LOG_DIR/significant-commits.log"
+        echo -e "${BLUE}📌 Logged as significant commit (>5 files changed)${NC}"
+    fi
+fi
+
+# Check if on feature branch and suggest PR
+if [ "$BRANCH" != "master" ] && [ "$BRANCH" != "main" ]; then
+    COMMITS_AHEAD=$(git rev-list --count origin/master..HEAD 2>/dev/null || echo "0")
+    if [ "$COMMITS_AHEAD" -gt 3 ]; then
+        echo -e "\n${YELLOW}🔀 You have $COMMITS_AHEAD commits on feature branch '$BRANCH'${NC}"
+        echo -e "${YELLOW}   Consider creating a pull request soon${NC}"
+    fi
+fi
+
+# Create daily summary if first commit of the day
+TODAY=$(date '+%Y-%m-%d')
+DAILY_LOG="$LOG_DIR/daily-$TODAY.log"
+if [ ! -f "$DAILY_LOG" ]; then
+    echo "=== Daily Development Log for $TODAY ===" > "$DAILY_LOG"
+    echo "First commit at $(date '+%H:%M:%S')" >> "$DAILY_LOG"
+fi
+echo "[$COMMIT_DATE] $COMMIT_MSG" >> "$DAILY_LOG"
+
+echo -e "\n${GREEN}Happy coding! 🚀${NC}"

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MultiImageDropZone, type ImageFile } from '@/components/multi-image-dropzone';
+import { IndexedDbImage } from '@/components/indexed-db-image';
 import { cn } from '@/lib/utils';
 import { Check, Image as ImageIcon, Upload, MoveLeft, MoveRight } from 'lucide-react';
 import Image from 'next/image';
@@ -139,13 +140,18 @@ export function ImageSelector({
                                                 handleHistoryImageToggle(image);
                                             }
                                         }}>
-                                        <Image
+                                        <IndexedDbImage
                                             src={image.path}
                                             alt={`Generated image`}
                                             fill
                                             className='object-cover rounded'
                                             sizes='(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
                                             unoptimized
+                                            fallback={
+                                                <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
+                                                    <ImageIcon className='h-8 w-8 text-white/20' />
+                                                </div>
+                                            }
                                         />
                                         {isSelected && (
                                             <div className='absolute inset-0 bg-blue-500/20 rounded flex items-center justify-center'>
@@ -183,13 +189,18 @@ export function ImageSelector({
                         {selectedImages.map((image, index) => (
                             <div key={image.id} className='flex items-center gap-3 p-2 rounded bg-white/5'>
                                 <div className='w-12 h-12 relative rounded overflow-hidden'>
-                                    <Image
+                                    <IndexedDbImage
                                         src={image.url || ''}
                                         alt={`Selected image ${index + 1}`}
                                         fill
                                         className='object-cover'
                                         sizes='48px'
                                         unoptimized
+                                        fallback={
+                                            <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
+                                                <ImageIcon className='h-4 w-4 text-white/20' />
+                                            </div>
+                                        }
                                     />
                                 </div>
                                 <div className='flex-1'>

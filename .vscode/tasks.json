@@ -1,0 +1,220 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup Git Hooks",
+      "type": "shell",
+      "command": "npm run setup-hooks",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Security Check",
+      "type": "shell",
+      "command": "claude /check-security",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Danish Localization Check",
+      "type": "shell",
+      "command": "claude /check-danish",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Memory Leak Check",
+      "type": "shell",
+      "command": "claude /check-memory",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Quick Check (All)",
+      "type": "shell",
+      "command": "claude /qcheck",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test Image Flow",
+      "type": "shell",
+      "command": "claude /test-image-flow",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Debug Konverter Tools",
+      "type": "shell",
+      "command": "claude /debug-konverter",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Optimize Performance",
+      "type": "shell",
+      "command": "claude /optimize-performance",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Add New Template",
+      "type": "shell",
+      "command": "claude /add-template",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy Check",
+      "type": "shell",
+      "command": "claude /deploy-check",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Monitor Costs",
+      "type": "shell",
+      "command": "claude /monitor-costs",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Dev Server",
+      "type": "npm",
+      "script": "dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Project",
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint Code",
+      "type": "npm",
+      "script": "lint",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "TypeScript Check",
+      "type": "npm",
+      "script": "typecheck",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Format Code",
+      "type": "npm",
+      "script": "format",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy to Fly.io",
+      "type": "shell",
+      "command": "fly deploy",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "View Fly.io Logs",
+      "type": "shell",
+      "command": "fly logs",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Quick Deploy (with checks)",
+      "type": "shell",
+      "command": "claude /qdeploy",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

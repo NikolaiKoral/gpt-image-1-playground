@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "setup-hooks": "bash .githooks/setup-hooks.sh",
+    "hooks:disable": "git config --unset core.hooksPath",
+    "hooks:skip": "SKIP_HOOKS=1",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

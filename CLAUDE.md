@@ -158,3 +158,80 @@ The app requires an **OpenAI organization verification** to access `gpt-image-1`
 ## Cost Tracking
 
 The app includes comprehensive cost calculation via `src/lib/cost-utils.ts` with detailed token usage tracking and USD estimates displayed in the history panel.
+
+## Deployment
+
+### Fly.io Deployment
+```bash
+fly deploy --config fly.toml
+```
+
+The app is configured to run on Fly.io with:
+- Auto-suspend for cost efficiency
+- 1GB memory allocation
+- Health checks on `/api/health`
+- IndexedDB storage mode enabled by default
+
+### Key Fly.io Commands
+```bash
+# Check deployment status
+fly status
+
+# View logs
+fly logs
+
+# Scale machines
+fly scale count 1
+
+# SSH into machine
+fly ssh console
+```
+
+## Image Processing Features
+
+### Packshot Tool
+- Background removal via Remove.bg API
+- Format conversion (PNG/JPG)
+- Batch processing with ZIP download
+- In-memory storage for session management
+
+### Mood Image Tool  
+- Automatic 800x800 square crop
+- Smart border detection and trimming
+- Batch processing support
+- Maintains aspect ratio with cover mode
+
+### Konverter Tools Suite
+- **EAN Renamer**: AI-powered filename parsing for product codes
+- **Image Converter**: Format conversion between JPG, PNG, WebP, GIF, TIFF, BMP
+- **Image Compressor**: Quality-based compression with analysis preview
+
+## Specialized Subagents
+
+The project includes specialized subagents in `.claude/commands/` for various development tasks:
+
+### Security & Quality Agents
+- `/check-security` - Comprehensive security audit for API keys, authentication, input validation, and AI prompt injection
+- `/check-danish` - Danish localization consistency checker for UI text, templates, and error messages
+- `/check-memory` - Memory leak detector for blob URLs, React effects, and buffer management
+
+### Development Workflow Agents
+- `/test-image-flow` - End-to-end testing of image upload, processing, and download flows
+- `/debug-konverter` - Specialized debugger for EAN renamer, converter, and compressor tools
+- `/optimize-performance` - Performance profiler for React renders, bundle size, and API response times
+
+### Feature Development Agents
+- `/add-template` - Template creator for new photography templates with Danish translations
+- `/add-konverter-tool` - Scaffolds new Konverter tools with UI component and API routes
+- `/enhance-ai` - AI integration specialist for optimizing prompts and adding new AI features
+
+### Operations Agents
+- `/deploy-check` - Pre-deployment validator for code quality, security, and Fly.io configuration
+- `/monitor-costs` - Cost analyzer for AI API usage, infrastructure, and optimization opportunities
+
+### Quick Commands
+- `/qcheck` - Runs parallel quality checks (security, Danish, memory, code quality, API practices)
+- `/qtest` - Executes essential test suite for core functionality
+- `/qdeploy` - Orchestrates safe deployment with validation, testing, and rollback plan
+
+Use these agents by typing `/` followed by the command name. Each agent has specialized knowledge and tools for its domain.

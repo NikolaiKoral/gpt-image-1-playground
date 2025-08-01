@@ -26,25 +26,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const storageMode = getStorageMode();
-    console.log(`Serving image ${filename} using ${storageMode} storage mode`);
 
     try {
         let fileBuffer: Buffer;
         let contentType: string;
 
         if (storageMode === 'indexeddb') {
-            // Fetch from IndexedDB
-            const imageRecord = await db.images.get(filename);
-            
-            if (!imageRecord || !imageRecord.blob) {
-                console.error(`Image ${filename} not found in IndexedDB`);
-                return NextResponse.json({ error: 'Image not found' }, { status: 404 });
-            }
-
-            // Convert blob to buffer
-            const arrayBuffer = await imageRecord.blob.arrayBuffer();
-            fileBuffer = Buffer.from(arrayBuffer);
-            contentType = imageRecord.blob.type || lookup(filename) || 'application/octet-stream';
+            // On server-side, we can't access IndexedDB
+            // Return a special response indicating the client should load from IndexedDB
+            return NextResponse.json({ 
+                error: 'IndexedDB mode - load from client', 
+                storageMode: 'indexeddb',
+                filename 
+            }, { 
+                status: 418 // Using "I'm a teapot" to indicate special handling needed
+            });
         } else {
             // Fetch from filesystem
             const filepath = path.join(imageBaseDir, filename);

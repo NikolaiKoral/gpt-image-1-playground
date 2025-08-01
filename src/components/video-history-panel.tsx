@@ -101,11 +101,16 @@ export function VideoHistoryPanel({
                                     <div className='flex gap-4'>
                                         {/* Thumbnail */}
                                         <div className='relative w-32 h-20 bg-black/50 rounded overflow-hidden flex-shrink-0'>
-                                            {video.status === 'completed' && video.videoUrl && typeof video.videoUrl === 'string' ? (
+                                            {video.status === 'completed' && (video.videoUrl || video.localVideoUrl) ? (
                                                 <video
-                                                    src={video.videoUrl}
+                                                    src={video.localVideoUrl || video.videoUrl}
                                                     className='w-full h-full object-cover'
                                                     muted
+                                                    playsInline
+                                                    onError={(e) => {
+                                                        // Hide video element on error to show placeholder
+                                                        (e.target as HTMLVideoElement).style.display = 'none';
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className='w-full h-full flex items-center justify-center'>
@@ -144,7 +149,7 @@ export function VideoHistoryPanel({
 
                                             {/* Actions */}
                                             <div className='flex gap-2 mt-2'>
-                                                {video.status === 'completed' && video.videoUrl && (
+                                                {video.status === 'completed' && (video.videoUrl || video.localVideoUrl) && (
                                                     <>
                                                         <Button
                                                             size='sm'
@@ -192,7 +197,7 @@ export function VideoHistoryPanel({
             </CardContent>
 
             {/* Video Preview Modal */}
-            {selectedVideo?.status === 'completed' && selectedVideo.videoUrl && typeof selectedVideo.videoUrl === 'string' && (
+            {selectedVideo?.status === 'completed' && (selectedVideo.videoUrl || selectedVideo.localVideoUrl) && (
                 <div 
                     className='fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4'
                     onClick={() => setSelectedVideo(null)}>
@@ -212,7 +217,7 @@ export function VideoHistoryPanel({
                             </Button>
                         </div>
                         <VideoPlayer
-                            src={selectedVideo.videoUrl}
+                            src={selectedVideo.localVideoUrl || selectedVideo.videoUrl || ''}
                             className='w-full'
                             autoPlay
                         />

@@ -952,6 +952,10 @@ export default function HomePage() {
     // Handle video deletion
     const handleVideoDelete = React.useCallback(async (videoId: string) => {
         try {
+            // Revoke blob URL if it exists
+            const { blobManager } = await import('@/lib/blob-manager');
+            blobManager.revokeUrl(`video-${videoId}`);
+            
             // Delete from IndexedDB
             await db.deleteVideo(videoId);
             
@@ -967,18 +971,31 @@ export default function HomePage() {
 
     // Handle video download
     const handleVideoDownload = React.useCallback(async (video: VideoHistoryItem) => {
-        if (!video.videoUrl) {
+        const videoUrl = video.localVideoUrl || video.videoUrl;
+        if (!videoUrl) {
             setError('No video URL available for download');
             return;
         }
 
         try {
-            const response = await fetch(video.videoUrl);
-            if (!response.ok) {
-                throw new Error('Failed to fetch video for download');
+            let blob: Blob;
+            
+            // If using local blob URL, get the blob from IndexedDB
+            if (video.localVideoUrl && video.locallyStored) {
+                const videoData = await db.getVideo(video.id);
+                if (!videoData?.record.blob) {
+                    throw new Error('Video blob not found in storage');
+                }
+                blob = videoData.record.blob;
+            } else {
+                // Otherwise fetch from remote URL
+                const response = await fetch(videoUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch video for download');
+                }
+                blob = await response.blob();
             }
 
-            const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             
             const a = document.createElement('a');
@@ -999,13 +1016,50 @@ export default function HomePage() {
 
     // Load video history on mount
     React.useEffect(() => {
-        if (allDbVideos) {
-            const videoItems: VideoHistoryItem[] = allDbVideos.map(video => ({
-                ...video,
-                localVideoUrl: video.locallyStored ? `blob:${video.id}` : undefined
-            }));
-            setVideoHistory(videoItems);
-        }
+        const loadVideos = async () => {
+            if (allDbVideos) {
+                const videoItems: VideoHistoryItem[] = await Promise.all(
+                    allDbVideos.map(async (video) => {
+                        let localVideoUrl: string | undefined;
+                        
+                        // If video is stored locally, retrieve the blob and create a real URL
+                        if (video.locallyStored) {
+                            try {
+                                const videoData = await db.getVideo(video.id);
+                                if (videoData?.record.blob) {
+                                    // Create a real blob URL using the blob manager
+                                    const { blobManager } = await import('@/lib/blob-manager');
+                                    localVideoUrl = blobManager.createUrl(videoData.record.blob, `video-${video.id}`);
+                                }
+                            } catch (error) {
+                                console.error(`Failed to load video blob for ${video.id}:`, error);
+                            }
+                        }
+                        
+                        return {
+                            ...video,
+                            localVideoUrl
+                        };
+                    })
+                );
+                setVideoHistory(videoItems);
+            }
+        };
+        
+        loadVideos();
+        
+        // Cleanup function to revoke video blob URLs
+        return () => {
+            if (allDbVideos) {
+                import('@/lib/blob-manager').then(({ blobManager }) => {
+                    allDbVideos.forEach(video => {
+                        if (video.locallyStored) {
+                            blobManager.revokeUrl(`video-${video.id}`);
+                        }
+                    });
+                });
+            }
+        };
     }, [allDbVideos]);
 
     // Create image history for video form

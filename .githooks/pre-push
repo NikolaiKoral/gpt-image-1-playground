@@ -1,0 +1,158 @@
+#!/bin/bash
+# Pre-push hook for GPT-Image-1-Playground
+# Comprehensive checks before pushing to remote
+
+echo "🚀 Running pre-push checks..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Get push information
+REMOTE="$1"
+URL="$2"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+echo -e "${BLUE}📍 Pushing to: ${NC}$REMOTE ($URL)"
+echo -e "${BLUE}🌿 Branch: ${NC}$BRANCH"
+
+# Track if any checks fail
+FAILED=0
+
+# Function to check if Claude Code is available
+check_claude() {
+    if command -v claude &> /dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# 1. Check for uncommitted changes
+echo "📋 Checking for uncommitted changes..."
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo -e "${RED}❌ You have uncommitted changes!${NC}"
+    echo "Please commit or stash your changes before pushing."
+    FAILED=1
+fi
+
+# 2. Run build check
+echo "🏗️  Running build check..."
+if ! npm run build > /dev/null 2>&1; then
+    echo -e "${RED}❌ Build failed!${NC}"
+    echo "Fix build errors before pushing."
+    FAILED=1
+else
+    echo -e "${GREEN}✅ Build successful${NC}"
+fi
+
+# 3. Check if pushing to master/main
+if [ "$BRANCH" = "master" ] || [ "$BRANCH" = "main" ]; then
+    echo -e "${YELLOW}⚠️  Pushing to $BRANCH branch${NC}"
+    
+    # Extra checks for master
+    if check_claude; then
+        echo "🔐 Running comprehensive security check for $BRANCH..."
+        if ! claude /check-security 2>/dev/null; then
+            echo -e "${RED}❌ Security check failed${NC}"
+            read -p "Force push anyway? (y/n) " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                FAILED=1
+            fi
+        fi
+    fi
+fi
+
+# 4. Check for sensitive files
+echo "🔍 Checking for sensitive files..."
+SENSITIVE_PATTERNS=(
+    ".env.local"
+    ".env.production"
+    "*.pem"
+    "*.key"
+    "secrets.json"
+    "credentials.json"
+)
+
+for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+    if git ls-files | grep -q "$pattern"; then
+        echo -e "${RED}❌ Found sensitive file matching pattern: $pattern${NC}"
+        FAILED=1
+    fi
+done
+
+# 5. Check commit messages
+echo "📝 Checking recent commit messages..."
+COMMITS=$(git log origin/$BRANCH..HEAD --pretty=format:"%h %s" 2>/dev/null)
+if [ -z "$COMMITS" ]; then
+    echo -e "${YELLOW}⚠️  No new commits to push${NC}"
+else
+    echo "New commits to be pushed:"
+    echo "$COMMITS" | while read -r commit; do
+        echo "  - $commit"
+    done
+    
+    # Check for WIP commits
+    if echo "$COMMITS" | grep -qi "wip\|work in progress\|temp\|fixup"; then
+        echo -e "${YELLOW}⚠️  Found WIP/temporary commits${NC}"
+        read -p "Push with WIP commits? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            FAILED=1
+        fi
+    fi
+fi
+
+# 6. Run Claude deployment check if available
+if check_claude; then
+    echo -e "\n${BLUE}🤖 Running Claude pre-push checks...${NC}"
+    
+    # Quick deployment check
+    echo "🚀 Running deployment check..."
+    if ! claude /qdeploy --check-only 2>/dev/null; then
+        echo -e "${YELLOW}⚠️  Deployment check had warnings${NC}"
+    fi
+    
+    # Check if we're pushing Konverter tools changes
+    if git diff origin/$BRANCH..HEAD --name-only | grep -q "konverter"; then
+        echo "🔧 Konverter tools changed - running specific checks..."
+        claude /debug-konverter --quick 2>/dev/null || true
+    fi
+fi
+
+# 7. Size check for the push
+echo "📦 Checking push size..."
+PUSH_SIZE=$(git diff origin/$BRANCH..HEAD --stat | tail -1 | awk '{print $4}')
+if [ -n "$PUSH_SIZE" ] && [ "$PUSH_SIZE" -gt 1000 ]; then
+    echo -e "${YELLOW}⚠️  Large push detected: $PUSH_SIZE insertions/deletions${NC}"
+    echo "Consider breaking into smaller commits"
+fi
+
+# 8. Check for merge conflicts markers
+echo "🔀 Checking for merge conflict markers..."
+if git diff origin/$BRANCH..HEAD | grep -E "^(<<<<<<<|=======|>>>>>>>)" > /dev/null 2>&1; then
+    echo -e "${RED}❌ Found unresolved merge conflict markers${NC}"
+    FAILED=1
+fi
+
+# Final result
+if [ $FAILED -eq 1 ]; then
+    echo -e "\n${RED}❌ Pre-push checks failed!${NC}"
+    echo "Fix the issues above before pushing."
+    echo "Use 'git push --no-verify' to bypass (not recommended)"
+    exit 1
+else
+    echo -e "\n${GREEN}✅ All pre-push checks passed!${NC}"
+    echo -e "${GREEN}🚀 Pushing to $REMOTE...${NC}"
+    
+    # Log the push
+    LOG_DIR=".dev-logs"
+    mkdir -p "$LOG_DIR"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Push to $REMOTE/$BRANCH" >> "$LOG_DIR/pushes.log"
+    
+    exit 0
+fi

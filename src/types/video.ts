@@ -32,6 +32,7 @@ export interface VideoHistoryItem {
     status: 'pending' | 'processing' | 'completed' | 'failed';
     videoUrl?: string;
     localVideoUrl?: string;
+    locallyStored?: boolean;
     cost: number;
     metadata: {
         fileSize?: number;
