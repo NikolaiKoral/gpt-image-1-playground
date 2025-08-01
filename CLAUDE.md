@@ -206,32 +206,55 @@ fly ssh console
 - **Image Converter**: Format conversion between JPG, PNG, WebP, GIF, TIFF, BMP
 - **Image Compressor**: Quality-based compression with analysis preview
 
-## Specialized Subagents
+## Available Agent Commands
 
-The project includes specialized subagents in `.claude/commands/` for various development tasks:
+The `.claude/commands/` directory contains specialized slash commands for each agent type:
 
-### Security & Quality Agents
-- `/check-security` - Comprehensive security audit for API keys, authentication, input validation, and AI prompt injection
-- `/check-danish` - Danish localization consistency checker for UI text, templates, and error messages
-- `/check-memory` - Memory leak detector for blob URLs, React effects, and buffer management
+### Strategic Analysis (strategic-analyst)
+- `/swot-analysis` - SWOT analysis framework with actionable recommendations
+- `/competitive-analysis` - Porter's Five Forces and competitive positioning
 
-### Development Workflow Agents
-- `/test-image-flow` - End-to-end testing of image upload, processing, and download flows
-- `/debug-konverter` - Specialized debugger for EAN renamer, converter, and compressor tools
-- `/optimize-performance` - Performance profiler for React renders, bundle size, and API response times
+### Performance & KPIs (kpi-dashboard)
+- `/setup-metrics` - Design comprehensive KPI tracking system
+- `/performance-report` - Generate performance analysis with trends and insights
 
-### Feature Development Agents
-- `/add-template` - Template creator for new photography templates with Danish translations
-- `/add-konverter-tool` - Scaffolds new Konverter tools with UI component and API routes
-- `/enhance-ai` - AI integration specialist for optimizing prompts and adding new AI features
+### Revenue & Growth (revenue-optimizer)
+- `/pricing-strategy` - Optimize pricing models and strategies
+- `/growth-opportunities` - Identify expansion and revenue opportunities
 
-### Operations Agents
-- `/deploy-check` - Pre-deployment validator for code quality, security, and Fly.io configuration
-- `/monitor-costs` - Cost analyzer for AI API usage, infrastructure, and optimization opportunities
+### Business Cases (business-case)
+- `/roi-analysis` - ROI and financial modeling for initiatives
+- `/investment-proposal` - Create investment proposals with justification
 
-### Quick Commands
-- `/qcheck` - Runs parallel quality checks (security, Danish, memory, code quality, API practices)
-- `/qtest` - Executes essential test suite for core functionality
-- `/qdeploy` - Orchestrates safe deployment with validation, testing, and rollback plan
+### Quality & Validation (qa-validator)
+- `/security-audit` - Comprehensive security assessment and compliance
+- `/code-review` - Code quality, security, and maintainability review
 
-Use these agents by typing `/` followed by the command name. Each agent has specialized knowledge and tools for its domain.
+### Synthesis & Planning (synthesis-coordinator)
+- `/executive-summary` - Synthesize multi-agent findings into actionable summary
+- `/integration-plan` - Integrate recommendations from multiple analyses
+
+### Data Analysis (data-analyst)
+- `/data-quality` - Assess data quality issues and improvements
+- `/statistical-analysis` - Advanced statistical insights and modeling
+
+### Business Master (business-master)
+- `/strategic-planning` - 4-D strategic framework orchestration
+- `/transformation-roadmap` - Business transformation planning
+
+### Usage Example
+```
+Task(description="Analyze security", prompt="/security-audit", subagent_type="qa-validator")
+```
+
+### Multi-Agent Workflow Example
+```python
+# 1. Strategic discovery
+swot = Task(description="SWOT", prompt="/swot-analysis", subagent_type="strategic-analyst")
+
+# 2. Performance baseline  
+metrics = Task(description="Performance", prompt="/performance-report", subagent_type="kpi-dashboard")
+
+# 3. Synthesis
+summary = Task(description="Synthesize", prompt="/executive-summary", subagent_type="synthesis-coordinator")
+```
