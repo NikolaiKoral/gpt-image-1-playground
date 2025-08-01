@@ -3263,3 +3263,31 @@ https://nextjs.org/docs/messages/module-not-found
  ✓ Compiled middleware in 15ms
  GET / 200 in 330ms
  GET / 200 in 171ms
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 1006ms
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+   ▲ Next.js 15.3.1 (Turbopack)
+   - Local:        http://localhost:3004
+   - Network:      http://192.168.8.171:3004
+   - Environments: .env.local
+
+ ✓ Starting...
+ ⚠ Invalid next.config.ts options detected: 
+ ⚠     Unrecognized key(s) in object: 'api'
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ ✓ Compiled middleware in 135ms
+ ✓ Ready in 1005ms
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+   ▲ Next.js 15.3.1 (Turbopack)
+   - Local:        http://localhost:3004
+   - Network:      http://192.168.8.171:3004
+   - Environments: .env.local
+
+ ✓ Starting...
+ ⚠ Invalid next.config.ts options detected: 
+ ⚠     Unrecognized key(s) in object: 'api'
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ ✓ Compiled middleware in 88ms
+ ✓ Ready in 924ms
+ ✓ Compiled middleware in 3ms
+ ✓ Compiled in 17ms

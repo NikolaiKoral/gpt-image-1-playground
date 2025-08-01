@@ -1,42 +1,31 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Get the hostname from the request headers
-  const hostname = request.headers.get('host') || '';
-  
-  // Check if we're on the Fly.io domain
-  if (hostname.includes('fly.dev')) {
-    // Redirect to the custom domain
-    const url = request.nextUrl.clone();
-    url.hostname = 'mood-image-gen.com';
-    url.protocol = 'https:';
-    url.port = ''; // Remove port from redirect URL
+    // Clone the response
+    const response = NextResponse.next();
     
-    return NextResponse.redirect(url, 301); // 301 permanent redirect
-  }
-  
-  // Handle www to non-www redirect
-  if (hostname.startsWith('www.')) {
-    const url = request.nextUrl.clone();
-    url.hostname = hostname.replace('www.', '');
+    // Add security headers that can't be set in next.config.ts
+    const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
     
-    return NextResponse.redirect(url, 301);
-  }
-  
-  return NextResponse.next();
+    // Additional security headers
+    response.headers.set('X-Nonce', nonce);
+    
+    // Remove potentially sensitive headers
+    response.headers.delete('X-Powered-By');
+    response.headers.delete('Server');
+    
+    return response;
 }
 
-// Configure which paths the middleware should run on
+// Configure which routes use this middleware
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+    matcher: [
+        /*
+         * Match all request paths except for the ones starting with:
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         */
+        '/((?!_next/static|_next/image|favicon.ico).*)',
+    ],
 };

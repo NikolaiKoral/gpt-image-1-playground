@@ -1,8 +1,10 @@
-import crypto from 'crypto';
 import fs from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import path from 'path';
+import { verifyPasswordWithMigration, initializePasswordHash } from '@/lib/password-migration';
+import { withAuthAndRateLimit } from '@/middleware/rate-limit';
+import { logger } from '@/lib/logger';
 
 // Lazy initialization of OpenAI client
 let openai: OpenAI | null = null;
@@ -58,11 +60,10 @@ async function ensureOutputDirExists() {
     }
 }
 
-function sha256(data: string): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
-}
+// Initialize password hash on module load
+initializePasswordHash().catch(console.error);
 
-export async function POST(request: NextRequest) {
+export const POST = withAuthAndRateLimit(async (request: NextRequest) => {
     console.log('Received POST request to /api/images');
 
     if (!process.env.OPENAI_API_KEY) {
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
         } else {
             effectiveStorageMode = 'fs';
         }
-        console.log(
+        logger.log(
             `Effective Image Storage Mode: ${effectiveStorageMode} (Explicit: ${explicitMode || 'unset'}, Vercel: ${isOnVercel})`
         );
 
@@ -92,19 +93,6 @@ export async function POST(request: NextRequest) {
         }
 
         const formData = await request.formData();
-
-        if (process.env.APP_PASSWORD) {
-            const clientPasswordHash = formData.get('passwordHash') as string | null;
-            if (!clientPasswordHash) {
-                console.error('Missing password hash.');
-                return NextResponse.json({ error: 'Unauthorized: Missing password hash.' }, { status: 401 });
-            }
-            const serverPasswordHash = sha256(process.env.APP_PASSWORD);
-            if (clientPasswordHash !== serverPasswordHash) {
-                console.error('Invalid password hash.');
-                return NextResponse.json({ error: 'Unauthorized: Invalid password.' }, { status: 401 });
-            }
-        }
 
         const mode = formData.get('mode') as 'generate' | 'edit' | null;
         const prompt = formData.get('prompt') as string | null;
@@ -258,4 +246,4 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ error: errorMessage }, { status });
     }
-}
+}, 'imageGeneration');

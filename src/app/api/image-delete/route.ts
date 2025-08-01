@@ -1,13 +1,10 @@
-import crypto from 'crypto';
 import fs from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
+import { withAuth } from '@/middleware/auth-middleware';
 
 const outputDir = path.resolve(process.cwd(), 'generated-images');
 
-function sha256(data: string): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
-}
 
 type DeleteRequestBody = {
     filenames: string[];
@@ -20,29 +17,11 @@ type FileDeletionResult = {
     error?: string;
 };
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest) => {
     console.log('Received POST request to /api/image-delete');
 
     let requestBody: DeleteRequestBody;
     try {
-        // Clone the request to read the body for auth, then allow the original request to be read again
-        const clonedRequest = request.clone();
-        const tempBodyForAuth = await clonedRequest.json();
-
-        if (process.env.APP_PASSWORD) {
-            const clientPasswordHash = tempBodyForAuth.passwordHash as string | null;
-
-            if (!clientPasswordHash) {
-                console.error('Missing password hash for delete operation.');
-                return NextResponse.json({ error: 'Unauthorized: Missing password hash.' }, { status: 401 });
-            }
-            const serverPasswordHash = sha256(process.env.APP_PASSWORD);
-            if (clientPasswordHash !== serverPasswordHash) {
-                console.error('Invalid password hash for delete operation.');
-                return NextResponse.json({ error: 'Unauthorized: Invalid password.' }, { status: 401 });
-            }
-        }
-        // Now read the original request body for processing
         requestBody = await request.json();
     } catch (e) {
         console.error('Error parsing request body for /api/image-delete:', e);
@@ -93,4 +72,4 @@ export async function POST(request: NextRequest) {
         },
         { status: allSucceeded ? 200 : 207 } // 207 Multi-Status if some failed
     );
-}
+});

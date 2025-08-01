@@ -24,6 +24,7 @@ import type { VideoGenerationFormData, VideoHistoryItem, RunwayTask } from '@/ty
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Image as ImageIcon, Video, Palette, Edit, Settings2 } from 'lucide-react';
 import * as React from 'react';
+import { useCSRF } from '@/hooks/use-csrf';
 
 type HistoryImage = {
     filename: string;
@@ -88,6 +89,9 @@ export default function HomePage() {
     const [error, setError] = React.useState<string | null>(null);
     const [latestImageBatch, setLatestImageBatch] = React.useState<{ path: string; filename: string }[] | null>(null);
     const [imageOutputView, setImageOutputView] = React.useState<'grid' | number>('grid');
+    
+    // CSRF protection
+    const { csrfToken, addCSRFToFormData } = useCSRF();
     const [history, setHistory] = React.useState<HistoryMetadata[]>([]);
     const [videoHistory, setVideoHistory] = React.useState<VideoHistoryItem[]>([]);
     const [isInitialLoad, setIsInitialLoad] = React.useState(true);
@@ -345,6 +349,9 @@ export default function HomePage() {
                 setIsLoading(false);
                 return;
             }
+            
+            // Add CSRF token
+            addCSRFToFormData(apiFormData);
             apiFormData.append('mode', mode);
 
             // Only edit mode is supported
@@ -702,9 +709,12 @@ export default function HomePage() {
                 console.log('Successfully deleted from IndexedDB and cleared blob cache.');
             } else if (storageModeUsed === 'fs') {
                 console.log('Requesting deletion from filesystem via API:', filenamesToDelete);
-                const apiPayload: { filenames: string[]; passwordHash?: string } = { filenames: filenamesToDelete };
+                const apiPayload: { filenames: string[]; passwordHash?: string; csrfToken?: string } = { filenames: filenamesToDelete };
                 if (isPasswordRequiredByBackend && clientPasswordHash) {
                     apiPayload.passwordHash = clientPasswordHash;
+                }
+                if (csrfToken) {
+                    apiPayload.csrfToken = csrfToken;
                 }
 
                 const response = await fetch('/api/image-delete', {
@@ -860,6 +870,9 @@ export default function HomePage() {
             if (clientPasswordHash) {
                 apiFormData.append('passwordHash', clientPasswordHash);
             }
+            
+            // Add CSRF token
+            addCSRFToFormData(apiFormData);
 
             // Add basic parameters
             apiFormData.append('promptText', formData.promptText);

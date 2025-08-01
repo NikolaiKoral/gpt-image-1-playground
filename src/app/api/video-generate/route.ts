@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { createVideoGeneration, validateVideoRequest, createPromptImages } from '@/lib/runway-client';
 import type { VideoGenerationRequest, ImageSource } from '@/types/video';
+import { verifyPasswordWithMigration, initializePasswordHash } from '@/lib/password-migration';
+import { withAuthAndRateLimit } from '@/middleware/rate-limit';
 
-function sha256(data: string): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
-}
+// Initialize password hash on module load
+initializePasswordHash().catch(console.error);
 
-export async function POST(request: NextRequest) {
+export const POST = withAuthAndRateLimit(async (request: NextRequest) => {
     console.log('Received POST request to /api/video-generate');
 
     if (!process.env.RUNWAYML_API_SECRET) {
@@ -17,20 +17,6 @@ export async function POST(request: NextRequest) {
 
     try {
         const formData = await request.formData();
-
-        // Check password authentication if enabled
-        if (process.env.APP_PASSWORD) {
-            const clientPasswordHash = formData.get('passwordHash') as string | null;
-            if (!clientPasswordHash) {
-                console.error('Missing password hash.');
-                return NextResponse.json({ error: 'Unauthorized: Missing password hash.' }, { status: 401 });
-            }
-            const serverPasswordHash = sha256(process.env.APP_PASSWORD);
-            if (clientPasswordHash !== serverPasswordHash) {
-                console.error('Invalid password hash.');
-                return NextResponse.json({ error: 'Unauthorized: Invalid password.' }, { status: 401 });
-            }
-        }
 
         // Parse form data
         const promptText = formData.get('promptText') as string;
@@ -279,4 +265,4 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ error: errorMessage }, { status });
     }
-}
+}, 'videoGeneration');
