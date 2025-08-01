@@ -91,6 +91,14 @@ export function processFilesForPreview(
                 ean = removeLeadingZeros(ean);
             }
             
+            // Track EAN for sequential numbering
+            if (extraction.format === 'hyphen' && extraction.number) {
+                // For hyphen format, track the number to avoid conflicts
+                const currentCount = parseInt(extraction.number) || 1;
+                const existingCount = eanCountMap.get(ean) || 0;
+                eanCountMap.set(ean, Math.max(existingCount, currentCount));
+            }
+            
             let newName = filename;
             if (extraction.format === 'hyphen') {
                 newName = filename.replace(extraction.ean, ean);

@@ -20,7 +20,7 @@ async function analyzeFilenamesWithAI(filenames: string[]): Promise<Array<{ ean:
         const batchPromises = batch.map(async (filename) => {
             try {
                 const model = genAI.getGenerativeModel({ 
-                    model: 'gemini-2.5-pro',
+                    model: 'gemini-1.5-pro',
                     generationConfig: {
                         temperature: 0.1,
                         topP: 0.8,
@@ -124,6 +124,13 @@ export async function POST(request: NextRequest) {
         if (useAiMode && genAI) {
             console.log('Performing AI analysis for preview...');
             aiResults = await analyzeFilenamesWithAI(filenames);
+            
+            // Log AI results for debugging
+            console.log('AI Preview Results:', aiResults.map((result, index) => ({
+                filename: filenames[index],
+                ean: result.ean,
+                confidence: result.confidence
+            })));
         }
         
         // Process files for preview
