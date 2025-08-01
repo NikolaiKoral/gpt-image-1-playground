@@ -11,32 +11,82 @@ async function analyzeFilenamesWithAI(filenames: string[]): Promise<Array<{ ean:
         return filenames.map(() => ({ ean: null, confidence: 0 }));
     }
     
-    try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+    const results: Array<{ ean: string | null; confidence: number }> = [];
+    
+    // Process filenames in batches to avoid rate limits
+    const batchSize = 5;
+    for (let i = 0; i < filenames.length; i += batchSize) {
+        const batch = filenames.slice(i, i + batchSize);
+        const batchPromises = batch.map(async (filename) => {
+            try {
+                const model = genAI.getGenerativeModel({ 
+                    model: 'gemini-2.0-flash-exp',
+                    generationConfig: {
+                        temperature: 0.1,
+                        topP: 0.8,
+                        topK: 40,
+                        maxOutputTokens: 100,
+                    }
+                });
+                
+                const prompt = `Extract the 12 or 13 digit EAN/UPC barcode number from this filename: "${filename}"
+
+Rules:
+- EAN codes are exactly 12 or 13 consecutive digits
+- They may be surrounded by underscores, hyphens, dots, or other separators
+- Ignore any other numbers that aren't 12-13 digits long
+- Return ONLY the EAN number, nothing else
+- If no valid EAN found, return "NO_EAN"
+
+Examples:
+"product_0630870296793_large.jpg" → "0630870296793"
+"IMG-8901030865278-FINAL.png" → "8901030865278"
+"item_desc_0843251198986_v2.jpg" → "0843251198986"
+"0630870296793__1__new.jpg" → "0630870296793"
+"random_text_123.jpg" → "NO_EAN"
+"photo_98765.png" → "NO_EAN"
+
+Filename: "${filename}"
+EAN:`;
+
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text().trim();
+                
+                // Validate the response
+                let ean: string | null = null;
+                let confidence = 0;
+
+                if (text !== 'NO_EAN' && /^\d{12,13}$/.test(text)) {
+                    ean = text;
+                    confidence = 0.9; // High confidence for valid EAN format
+                } else if (text === 'NO_EAN') {
+                    confidence = 0.8; // High confidence that no EAN was found
+                } else {
+                    // Unexpected response format, try to extract EAN with regex
+                    const match = text.match(/\b(\d{12,13})\b/);
+                    if (match) {
+                        ean = match[1];
+                        confidence = 0.7; // Lower confidence for extracted EAN
+                    } else {
+                        confidence = 0.3; // Low confidence, couldn't parse response
+                    }
+                }
+                
+                console.log(`AI parsed "${filename}" → EAN: ${ean || 'none'}, confidence: ${confidence}`);
+                return { ean, confidence };
+                
+            } catch (error) {
+                console.error('Error parsing filename with Gemini:', error);
+                return { ean: null, confidence: 0 };
+            }
+        });
         
-        const prompt = `Analyze these filenames and extract EAN codes (13-digit barcodes).
-Return ONLY a JSON array with objects containing "ean" (the 13-digit code or null) and "confidence" (0-1).
-
-Filenames:
-${filenames.join('\n')}
-
-Example response:
-[{"ean":"5710350003495","confidence":0.9},{"ean":null,"confidence":0}]`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        
-        // Extract JSON from response
-        const jsonMatch = text.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-    } catch (error) {
-        console.error('AI analysis failed:', error);
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
     }
     
-    return filenames.map(() => ({ ean: null, confidence: 0 }));
+    return results;
 }
 
 export async function POST(request: NextRequest) {
